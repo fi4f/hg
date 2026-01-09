@@ -1,17 +1,17 @@
 import { Vector2 } from "./vector2.js";
-import { ADD, SUB, MUL, DIV, MOD } from "./maths.js";
+import { ADD, SUB, MUL, DIV, MOD } from "./index.js";
 
 export type Matrix2 = [
   number, number,
   number, number,
 ]
 
-export const XX = 0 as const;
-export const XY = 1 as const;
-export const YX = 2 as const;
-export const YY = 3 as const;
+const XX = 0 as const;
+const XY = 1 as const;
+const YX = 2 as const;
+const YY = 3 as const;
 
-export const __get__ = {
+const __get__ = {
   xx(a: Matrix2) { return a[XX] },
   xy(a: Matrix2) { return a[XY] },
   yx(a: Matrix2) { return a[YX] },
@@ -34,7 +34,7 @@ export const __get__ = {
   }},
 }
 
-export const __set__ = {
+const __set__ = {
   xx(a: Matrix2, xx: number) { return a[XX] = xx },
   xy(a: Matrix2, xy: number) { return a[XY] = xy },
   yx(a: Matrix2, yx: number) { return a[YX] = yx },
@@ -83,43 +83,43 @@ export const __set__ = {
   },
 }
 
-export function xx(a: Matrix2, xx ?: number) {
+function xx(a: Matrix2, xx ?: number) {
   return xx === undefined ? __get__.xx(a) : __set__.xx(a, xx)
 }
 
-export function xy(a: Matrix2, xy ?: number) {
+function xy(a: Matrix2, xy ?: number) {
   return xy === undefined ? __get__.xy(a) : __set__.xy(a, xy)
 }
 
-export function yx(a: Matrix2, yx ?: number) {
+function yx(a: Matrix2, yx ?: number) {
   return yx === undefined ? __get__.yx(a) : __set__.yx(a, yx)
 }
 
-export function yy(a: Matrix2, yy ?: number) {
+function yy(a: Matrix2, yy ?: number) {
   return yy === undefined ? __get__.yy(a) : __set__.yy(a, yy)
 }
 
-export function r0(a: Matrix2, r0 ?: number | Vector2) {
+function r0(a: Matrix2, r0 ?: number | Vector2) {
   return r0 === undefined ? __get__.r0(a) : __set__.r0(a, r0)
 }
 
-export function r1(a: Matrix2, r1 ?: number | Vector2) {
+function r1(a: Matrix2, r1 ?: number | Vector2) {
   return r1 === undefined ? __get__.r1(a) : __set__.r1(a, r1)
 }
 
-export function c0(a: Matrix2, c0 ?: number | Vector2) {
+function c0(a: Matrix2, c0 ?: number | Vector2) {
   return c0 === undefined ? __get__.c0(a) : __set__.c0(a, c0)
 }
 
-export function c1(a: Matrix2, c1 ?: number | Vector2) {
+function c1(a: Matrix2, c1 ?: number | Vector2) {
   return c1 === undefined ? __get__.c1(a) : __set__.c1(a, c1)
 }
 
-export function row(a: Matrix2, i: 0 | 1, ri ?: number | Vector2) {
+function row(a: Matrix2, i: 0 | 1, ri ?: number | Vector2) {
   return ri === undefined ? __get__.row(a, i) : __set__.row(a, i, ri)
 }
 
-export function col(a: Matrix2, j: 0 | 1, cj ?: number | Vector2) {
+function col(a: Matrix2, j: 0 | 1, cj ?: number | Vector2) {
   return cj === undefined ? __get__.col(a, j) : __set__.col(a, j, cj)
 }
 

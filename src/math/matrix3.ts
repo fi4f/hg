@@ -1,5 +1,5 @@
 import { Vector3 } from "./vector3.js";
-import { ADD, SUB, MUL, DIV, MOD } from "./maths.js";
+import { ADD, SUB, MUL, DIV, MOD } from "./index.js";
 
 export type Matrix3 = [
   number, number, number,
@@ -7,17 +7,17 @@ export type Matrix3 = [
   number, number, number
 ]
 
-export const XX = 0 as const;
-export const XY = 1 as const;
-export const XZ = 2 as const;
-export const YX = 3 as const;
-export const YY = 4 as const;
-export const YZ = 5 as const;
-export const ZX = 6 as const;
-export const ZY = 7 as const;
-export const ZZ = 8 as const;
+const XX = 0 as const;
+const XY = 1 as const;
+const XZ = 2 as const;
+const YX = 3 as const;
+const YY = 4 as const;
+const YZ = 5 as const;
+const ZX = 6 as const;
+const ZY = 7 as const;
+const ZZ = 8 as const;
 
-export const __get__ = {
+const __get__ = {
   xx(a: Matrix3) { return a[XX] },
   xy(a: Matrix3) { return a[XY] },
   xz(a: Matrix3) { return a[XZ] },
@@ -49,7 +49,7 @@ export const __get__ = {
   }},
 }
 
-export const __set__ = {
+const __set__ = {
   xx(a: Matrix3, xx: number) { return a[XX] = xx },
   xy(a: Matrix3, xy: number) { return a[XY] = xy },
   xz(a: Matrix3, xz: number) { return a[XZ] = xz },
@@ -125,71 +125,71 @@ export const __set__ = {
   },
 }
 
-export function xx(a: Matrix3, xx ?: number) {
+function xx(a: Matrix3, xx ?: number) {
   return xx === undefined ? __get__.xx(a) : __set__.xx(a, xx)
 }
 
-export function xy(a: Matrix3, xy ?: number) {
+function xy(a: Matrix3, xy ?: number) {
   return xy === undefined ? __get__.xy(a) : __set__.xy(a, xy)
 }
 
-export function xz(a: Matrix3, xz ?: number) {
+function xz(a: Matrix3, xz ?: number) {
   return xz === undefined ? __get__.xz(a) : __set__.xz(a, xz)
 }
 
-export function yx(a: Matrix3, yx ?: number) {
+function yx(a: Matrix3, yx ?: number) {
   return yx === undefined ? __get__.yx(a) : __set__.yx(a, yx)
 }
 
-export function yy(a: Matrix3, yy ?: number) {
+function yy(a: Matrix3, yy ?: number) {
   return yy === undefined ? __get__.yy(a) : __set__.yy(a, yy)
 }
 
-export function yz(a: Matrix3, yz ?: number) {
+function yz(a: Matrix3, yz ?: number) {
   return yz === undefined ? __get__.yz(a) : __set__.yz(a, yz)
 }
 
-export function zx(a: Matrix3, zx ?: number) {
+function zx(a: Matrix3, zx ?: number) {
   return zx === undefined ? __get__.zx(a) : __set__.zx(a, zx)
 }
 
-export function zy(a: Matrix3, zy ?: number) {
+function zy(a: Matrix3, zy ?: number) {
   return zy === undefined ? __get__.zy(a) : __set__.zy(a, zy)
 }
 
-export function zz(a: Matrix3, zz ?: number) {
+function zz(a: Matrix3, zz ?: number) {
   return zz === undefined ? __get__.zz(a) : __set__.zz(a, zz)
 }
 
-export function r0(a: Matrix3, r0 ?: number | Vector3) {
+function r0(a: Matrix3, r0 ?: number | Vector3) {
   return r0 === undefined ? __get__.r0(a) : __set__.r0(a, r0)
 }
 
-export function r1(a: Matrix3, r1 ?: number | Vector3) {
+function r1(a: Matrix3, r1 ?: number | Vector3) {
   return r1 === undefined ? __get__.r1(a) : __set__.r1(a, r1)
 }
 
-export function r2(a: Matrix3, r2 ?: number | Vector3) {
+function r2(a: Matrix3, r2 ?: number | Vector3) {
   return r2 === undefined ? __get__.r2(a) : __set__.r2(a, r2)
 }
 
-export function c0(a: Matrix3, c0 ?: number | Vector3) {
+function c0(a: Matrix3, c0 ?: number | Vector3) {
   return c0 === undefined ? __get__.c0(a) : __set__.c0(a, c0)
 }
 
-export function c1(a: Matrix3, c1 ?: number | Vector3) {
+function c1(a: Matrix3, c1 ?: number | Vector3) {
   return c1 === undefined ? __get__.c1(a) : __set__.c1(a, c1)
 }
 
-export function c2(a: Matrix3, c2 ?: number | Vector3) {
+function c2(a: Matrix3, c2 ?: number | Vector3) {
   return c2 === undefined ? __get__.c2(a) : __set__.c2(a, c2)
 }
 
-export function row(a: Matrix3, i: 0 | 1 | 2, ri ?: number | Vector3) {
+function row(a: Matrix3, i: 0 | 1 | 2, ri ?: number | Vector3) {
   return ri === undefined ? __get__.row(a, i) : __set__.row(a, i, ri)
 }
 
-export function col(a: Matrix3, j: 0 | 1 | 2, cj ?: number | Vector3) {
+function col(a: Matrix3, j: 0 | 1 | 2, cj ?: number | Vector3) {
   return cj === undefined ? __get__.col(a, j) : __set__.col(a, j, cj)
 }
 

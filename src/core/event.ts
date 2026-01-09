@@ -1,4 +1,4 @@
-import type { Maybe } from "./types.js"
+import type { Maybe } from "../util/types.js"
 
 export namespace Event {
   export type Listener<T> = (event: T, context: Event.Context<T>) => void

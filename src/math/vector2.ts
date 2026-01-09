@@ -1,4 +1,4 @@
-import { ADD, SUB, MUL, DIV, MOD } from "./maths.js";
+import { ADD, SUB, MUL, DIV, MOD } from "./index.js";
 
 export type Vector2 = [number, number]
 

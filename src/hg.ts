@@ -1,4 +1,4 @@
-import { Version } from "./version.js";
+import { Version } from "./util/version.js";
 
 export const VERSION = Version.new({
   moniker: "hg",
@@ -7,15 +7,19 @@ export const VERSION = Version.new({
   patch  : 1,
 })
 
-export { Version } from "./version.js"
-export { Vector2 } from "./vector2.js"
-export { Vector3 } from "./vector3.js"
-export { Vector4 } from "./vector4.js"
-export { Matrix2 } from "./matrix2.js"
-export { Matrix3 } from "./matrix3.js"
-export { Matrix4 } from "./matrix4.js"
-export { Stage   } from "./stage.js"
-export { Scene   } from "./scene.js"
-export { Event   } from "./event.js"
+// forward core exports
+export * from "./core/stage.js"
+export * from "./core/scene.js"
+export * from "./core/event.js"
+export * from "./core/asset.js"
 
-export { Asset, Cache } from "./asset.js"
+// forward math exports
+export * from "./math/vector2.js"
+export * from "./math/vector3.js"
+export * from "./math/vector4.js"
+export * from "./math/matrix2.js"
+export * from "./math/matrix3.js"
+export * from "./math/matrix4.js"
+
+// forward util exports
+export * from "./util/version.js"

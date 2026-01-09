@@ -1,4 +1,4 @@
-import type { Maybe } from "./types.js"
+import type { Maybe } from "../util/types.js"
 import type { Stage } from "./stage.js"
 
 export type Scene = {

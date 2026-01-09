@@ -1,39 +1,39 @@
-import { ADD, SUB, MUL, DIV, MOD } from "./maths.js";
+import { ADD, SUB, MUL, DIV, MOD } from "./index.js";
 
 export type Vector4 = [number, number, number, number]
 
-export const X = 0 as const;
-export const Y = 1 as const;
-export const Z = 2 as const;
-export const W = 3 as const;
+const X = 0 as const;
+const Y = 1 as const;
+const Z = 2 as const;
+const W = 3 as const;
 
-export const __get__ = {
+const __get__ = {
   x(a: Vector4) { return a[X] },
   y(a: Vector4) { return a[Y] },
   z(a: Vector4) { return a[Z] },
   w(a: Vector4) { return a[W] },
 }
 
-export const __set__ = {
+const __set__ = {
   x(a: Vector4, x: number) { return a[X] = x },
   y(a: Vector4, y: number) { return a[Y] = y },
   z(a: Vector4, z: number) { return a[Z] = z },
   w(a: Vector4, w: number) { return a[W] = w },
 }
 
-export function x(a: Vector4, x ?: number) {
+function x(a: Vector4, x ?: number) {
   return x === undefined ? __get__.x(a) : __set__.x(a, x)
 }
 
-export function y(a: Vector4, y ?: number) {
+function y(a: Vector4, y ?: number) {
   return y === undefined ? __get__.y(a) : __set__.y(a, y)
 }
 
-export function z(a: Vector4, z ?: number) {
+function z(a: Vector4, z ?: number) {
   return z === undefined ? __get__.z(a) : __set__.z(a, z)
 }
 
-export function w(a: Vector4, w ?: number) {
+function w(a: Vector4, w ?: number) {
   return w === undefined ? __get__.w(a) : __set__.w(a, w)
 }
 

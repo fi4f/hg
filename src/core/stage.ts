@@ -1,7 +1,7 @@
 import { Event } from "./event.js"
 import { Scene } from "./scene.js"
-import type { Maybe } from "./types.js"
-import { Vector2 } from "./vector2.js"
+import type { Maybe } from "../util/types.js"
+import { Vector2 } from "../math/vector2.js"
 
 export type Stage = {
   // configure
