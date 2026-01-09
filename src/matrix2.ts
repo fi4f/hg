@@ -1,5 +1,5 @@
 import { Vector2 } from "./vector2.js";
-import { ADD, SUB, MUL, DIV, MOD } from "./math.js";
+import { ADD, SUB, MUL, DIV, MOD } from "./maths.js";
 
 export type Matrix2 = [
   number, number,
