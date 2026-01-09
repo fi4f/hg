@@ -20,6 +20,14 @@ export const Version = {
     } satisfies Version;
   },
 
+  compare(a: Version, b: Version) {
+    let k;
+    if ((k = a.major - b.major) !== 0) return k
+    if ((k = a.minor - b.minor) !== 0) return k
+    if ((k = a.patch - b.patch) !== 0) return k
+    return 0;
+  },
+
   toString(a: Version) {
     return `${a.moniker} ${a.major}.${a.minor}.${a.patch}`;
   }

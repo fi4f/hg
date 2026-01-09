@@ -3,6 +3,15 @@ import { Scene } from "./scene.js"
 import type { Maybe } from "../util/types.js"
 import { Vector2 } from "../math/vector2.js"
 
+const  FRAME_INFO = "stage:frame-info"  as const
+const UPDATE_INFO = "stage:update-info" as const
+const RENDER_INFO = "stage:render-info" as const
+const CANVAS_INFO = "stage:canvas-info" as const
+
+// events
+const RESIZE = "stage:resize" as const
+const CHANGE = "stage:change" as const
+
 export type Stage = {
   // configure
   readonly configureDebug             : "print" | "paint" | boolean
@@ -22,11 +31,9 @@ export type Stage = {
   virtualCanvasContext: OffscreenCanvasRenderingContext2D
   virtualScale: number
 
-  // events
-  events: Event.Tree
-
-  // debugs
-  debugs: Map<string, string | undefined>
+  // data
+  eventTree: Event.Tree
+  debugInfo: Map<string, string | undefined>
 
   // scene
   scene ?: Scene | undefined
@@ -66,6 +73,7 @@ export type Stage = {
 }
 
 export const Stage = {
+  RESIZE, CHANGE,
   new(c: HTMLCanvasElement, o ?: {
     debug ?: "print" | "paint" | boolean
     w     ?: number
@@ -130,8 +138,8 @@ export const Stage = {
       virtualCanvasContext,
       virtualScale,
 
-      events: Event.Tree.new(),
-      debugs: new Map(),
+      eventTree: Event.Tree.new(),
+      debugInfo: new Map(),
       
       lastUpdate: 0,
       lastRender: 0,
@@ -166,14 +174,15 @@ export const Stage = {
       maximumMillisPerRenderAccumulator: 0,
     } satisfies Stage
 
-    Stage.setDebugInfo(stage, "stage:frame" , undefined)
-    Stage.setDebugInfo(stage, "stage:update", undefined)
-    Stage.setDebugInfo(stage, "stage:render", undefined)
-    Stage.setDebugInfo(stage, "stage:canvas", undefined)
+    // ensure these debug infos appear near the top of each debug view
+    Stage.setDebugInfo(stage, FRAME_INFO , undefined)
+    Stage.setDebugInfo(stage, UPDATE_INFO, undefined)
+    Stage.setDebugInfo(stage, RENDER_INFO, undefined)
+    Stage.setDebugInfo(stage, CANVAS_INFO, undefined)
 
     new ResizeObserver(() => resize(stage)).observe(c)
-    Stage.listen<     Vector2>(stage, "stage:resize", wh => onResize(stage, wh))
-    Stage.listen<Maybe<Scene>>(stage, "stage:change", sc => onChange(stage, sc))
+    Stage.listen<     Vector2>(stage, RESIZE, wh => onResize(stage, wh))
+    Stage.listen<Maybe<Scene>>(stage, CHANGE, sc => onChange(stage, sc))
 
     requestAnimationFrame(
       firstFrame => requestAnimationFrame(
@@ -205,38 +214,38 @@ export const Stage = {
   },
 
   change(stage: Stage, scene: Maybe<Scene>) {
-    Stage.dispatch(stage, "stage:change", scene)
+    Stage.dispatch(stage, CHANGE, scene)
   },
 
   listen<T>(stage: Stage, type  : string, listener  : Event.Listener<T>, o ?: { path ?: string, defer ?: boolean }) {
-    Event.listen(stage.events, type, listener, o)
+    Event.listen(stage.eventTree, type, listener, o)
   },
 
   deafen<T>(stage: Stage, type ?: string, listener ?: Event.Listener<T>, o ?: { path ?: string, defer ?: boolean }) {
-    Event.deafen(stage.events, type, listener, o)
+    Event.deafen(stage.eventTree, type, listener, o)
   },
 
   dispatch<T>(stage: Stage, type: string, event: T, o ?: { path ?: string, defer ?: boolean }) {
-    Event.dispatch(stage.events, type, event, o)
+    Event.dispatch(stage.eventTree, type, event, o)
   },
 
   poll(stage: Stage) {
-    Event.poll(stage.events)
+    Event.poll(stage.eventTree)
   },
 
   getDebugInfo(stage: Stage, id: string) {
-    return stage.debugs.get(id)
+    return stage.debugInfo.get(id)
   },
 
   setDebugInfo(stage: Stage, id: string, info: string | undefined) {
-    stage.debugs.set(id, info)
+    stage.debugInfo.set(id, info)
   }
 }
 
 function resize(stage: Stage) {
   const w = stage.logicalCanvasElement.getBoundingClientRect().width
   const h = stage.logicalCanvasElement.getBoundingClientRect().height
-  Stage.dispatch(stage, "stage:resize", [w, h])
+  Stage.dispatch(stage, RESIZE, [w, h])
 }
 
 function onResize(stage: Stage, [w, h]: Vector2) {
@@ -263,6 +272,8 @@ function onResize(stage: Stage, [w, h]: Vector2) {
   )
   if (stage.configureScaleIncrement)
     stage.virtualScale = Math.floor(stage.virtualScale / stage.configureScaleIncrement) * stage.configureScaleIncrement
+
+  Stage.setDebugInfo(stage, CANVAS_INFO, getCanvasInfo(stage))
 }
 
 function onChange(stage: Stage, scene: Maybe<Scene>) {
@@ -419,7 +430,7 @@ function getCanvasInfo(stage: Stage) {
 
 function printDebugInfos(stage: Stage) {
   let infos = "*** DEBUG ***\n"
-  for (const [id, info] of stage.debugs) {
+  for (const [id, info] of stage.debugInfo) {
     if (!info) continue
     infos += `${info}\n`
   }
@@ -441,7 +452,7 @@ function paintDebugInfos(stage: Stage) {
 
   let w = 0;
   let h = 0;   
-  for (const [id, info] of stage.debugs) {
+  for (const [id, info] of stage.debugInfo) {
     if (!info) continue
 
     const tm = g.measureText(info)
@@ -467,7 +478,7 @@ function paintDebugInfos(stage: Stage) {
   g.fillStyle = configureDebugForeground
   let x = configurePaddingX
   let y = configurePaddingY
-  for (const [id, info] of stage.debugs) {
+  for (const [id, info] of stage.debugInfo) {
     if (!info) continue
 
     const tm = g.measureText(info)
