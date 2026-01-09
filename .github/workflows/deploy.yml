@@ -24,12 +24,6 @@ jobs:
       # 4️⃣ Build TypeScript
       - run: npx tsc
 
-      # 5️⃣ Copy public assets to dist
-      - name: Copy public folder
-        run: |
-          mkdir -p dist
-          cp -r public/* dist/
-
       # 6️⃣ Deploy to GitHub Pages
       - uses: peaceiris/actions-gh-pages@v4
         with:
