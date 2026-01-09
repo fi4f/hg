@@ -1,7 +1,7 @@
 {
   "name": "@fi4f/hg",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.0.2",
+  "description": "A tiny 2d game engine for the web.",
   "homepage": "https://github.com/fi4f/hg#readme",
   "bugs": {
     "url": "https://github.com/fi4f/hg/issues"
@@ -11,17 +11,15 @@
     "url": "git+https://github.com/fi4f/hg.git"
   },
   "license": "ISC",
-  "author": "",
+  "author": "Shawn McGee",
   "type": "module",
   "main": "dist/hg.js",
   "types": "dist/hg.d.ts",
+  "files": [ "dist" ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"tsc --watch\" \"npx serve\"",
     "build": "tsc"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
     "typescript": "^5.9.3"
   }
 }
