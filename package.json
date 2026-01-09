@@ -1,6 +1,6 @@
 {
-  "name": "hg",
-  "version": "1.0.0",
+  "name": "@fi4f/hg",
+  "version": "0.0.1",
   "description": "",
   "homepage": "https://github.com/fi4f/hg#readme",
   "bugs": {
@@ -13,16 +13,15 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/hg.js",
+  "types": "dist/hg.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"tsc --watch\" \"npx serve\"",
     "build": "tsc"
   },
-  "dependencies": {
-    "typescript": "^5.9.3"
-  },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
   }
 }
