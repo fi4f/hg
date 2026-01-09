@@ -13,6 +13,7 @@ export type JSON  = typeof JSON ;
 export type Kind = IMAGE | AUDIO | TEXT | BLOB | JSON;
 
 export type Asset<T extends Kind> = { kind: T, path: string, id ?: string | undefined }
+
 export namespace Asset {
   export type Image = Asset<IMAGE>
   export type Audio = Asset<AUDIO>
@@ -20,6 +21,8 @@ export namespace Asset {
   export type Blob  = Asset<BLOB >
   export type Json  = Asset<JSON >
 }
+
+export type Bundle = Array<Asset<any>>
 
 export type Cache = {
   images: { [id: string]: HTMLImageElement }
