@@ -397,10 +397,9 @@ function animate(stage: Stage, firstFrame: number, lastFrame: number, thisFrame:
 
     stage.oneSecondAccumulator -= 1000
 
-    Stage.setDebugInfo(stage, "stage:frame" , getFrameInfo (stage))
-    Stage.setDebugInfo(stage, "stage:update", getUpdateInfo(stage))
-    Stage.setDebugInfo(stage, "stage:render", getRenderInfo(stage))
-    Stage.setDebugInfo(stage, "stage:canvas", getCanvasInfo(stage))
+    Stage.setDebugInfo(stage, FRAME_INFO , getFrameInfo (stage))
+    Stage.setDebugInfo(stage, UPDATE_INFO, getUpdateInfo(stage))
+    Stage.setDebugInfo(stage, RENDER_INFO, getRenderInfo(stage))
 
     if (stage.configureDebug && stage.configureDebug !== "paint")
       printDebugInfos(stage)
