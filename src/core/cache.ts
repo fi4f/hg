@@ -23,31 +23,31 @@ export const Cache = {
   getImage(cache: Cache, id: string) {
     if (!(id in cache.images))
       throw `[Cache.getImage]: Image with id '${id}' does not exist`;
-    return cache.images[id];
+    return cache.images[id]!;
   },
 
   getAudio(cache: Cache, id: string) {
     if (!(id in cache.audios))
       throw `[Cache.getAudio]: Audio with id '${id}' does not exist`;
-    return cache.audios[id];
+    return cache.audios[id]!;
   },
 
   getText(cache: Cache, id: string) {
     if (!(id in cache.texts))
       throw `[Cache.getText]: Text with id '${id}' does not exist`;
-    return cache.texts[id];
+    return cache.texts[id]!;
   },
 
   getBlob(cache: Cache, id: string) {
     if (!(id in cache.blobs))
       throw `[Cache.getBlob]: Blob with id '${id}' does not exist`;
-    return cache.blobs[id];
+    return cache.blobs[id]!;
   },
 
   getJson(cache: Cache, id: string) {
     if(!(id in cache.jsons))
       throw `[Cache.getJson]: Json with id '${id}' does not exist`;
-    return cache.jsons[id];
+    return cache.jsons[id]!;
   },
 
   putImage(cache: Cache, id: string, image: HTMLImageElement) {
