@@ -12,6 +12,7 @@ export * from "./core/stage.js"
 export * from "./core/scene.js"
 export * from "./core/event.js"
 export * from "./core/asset.js"
+export * from "./core/cache.js"
 
 // forward math exports
 export * from "./math/vector2.js"
