@@ -280,7 +280,7 @@ function render(stage: Stage, t: number, dt: number) {
     paintDebugInfo(stage)
 }
 
-type Timing = {
+type Metrics = {
   framesPerSecondAccumulator: number
 
   averageFrameAccumulator : number
@@ -298,7 +298,7 @@ type Timing = {
   oneSecondAccumulator: number
 }
 
-const Timing = {
+const Metrics = {
   new() {
     return {
       framesPerSecondAccumulator: 0,
@@ -316,12 +316,12 @@ const Timing = {
       maximumRenderAccumulator  : 0,
 
       oneSecondAccumulator      : 0,
-    } satisfies Timing
+    } satisfies Metrics
   }
 }
 
-function animate(stage: Stage, t0: number, t1: number, t2: number, m ?: Timing) {
-  m ??= Timing.new()
+function animate(stage: Stage, t0: number, t1: number, t2: number, m ?: Metrics) {
+  m ??= Metrics.new()
 
   const t  = (t2 - t0) / 1000
   const dt = (t2 - t1) / 1000
@@ -391,7 +391,7 @@ function animate(stage: Stage, t0: number, t1: number, t2: number, m ?: Timing) 
       printDebugInfo(stage)
   }
 
-  requestAnimationFrame(t3 => animate(stage, t0, t2, t3))
+  requestAnimationFrame(t3 => animate(stage, t0, t2, t3, m))
 }
 
 function getFrameInfo(stage: Stage) {
