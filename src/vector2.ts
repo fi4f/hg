@@ -165,15 +165,12 @@ export const Vector2 = {
   },
 
   /**
-   * Convert a Vector2 into its string representation. Number-like
-   * arguments are promoted to uniform Vector2 objects before performing
-   * the operation.
+   * Convert a Vector2 into its string representation
    * ```js
    * Vector2.toString([1, 2]) // "vec2<1, 2>"
    * ```
    */
-  toString(a: number | Vector2) {
-    const [x, y] = Vector2.from(a)
+  toString([x, y]:  Vector2) {
     return `vec2<${x}, ${y}>` as const
   }
 }

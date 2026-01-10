@@ -204,15 +204,12 @@ export const Vector4 = {
   },
 
   /**
-   * Convert a Vector4 into its string representation. Number-like
-   * arguments are promoted to uniform Vector4 objects before performing
-   * the operation.
+   * Convert a Vector4 into its string representation.
    * ```js
    * Vector4.toString([1, 2, 3, 4]) // "vec4<1, 2, 3, 4>"
    * ```
    */
-  toString(a: number | Vector4) {
-    const [x, y, z, w] = Vector4.from(a)
+  toString([x, y, z, w]:  Vector4) {
     return `vec4<${x}, ${y}, ${z}, ${w}>` as const
   }
 }

@@ -186,15 +186,12 @@ export const Vector3 = {
   },
 
   /**
-   * Convert a Vector3 into its string representation. Number-like
-   * arguments are promoted to uniform Vector3 objects before performing
-   * the operation.
+   * Convert a Vector3 into its string representation.
    * ```js
    * Vector3.toString([1, 2, 3]) // "vec3<1, 2, 3>"
    * ```
    */
-  toString(a: number | Vector3) {
-    const [x, y, z] = Vector3.from(a)
+  toString([x, y, z]:  Vector3) {
     return `vec3<${x}, ${y}, ${z}>` as const
   }
 }
