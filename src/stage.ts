@@ -168,6 +168,26 @@ export const Stage = {
     return stage.virtualScale
   },
 
+  logicalToVirtual(stage: Stage, [x, y]: Vector2) {
+    const [lw, lh] = Stage.getLogicalSize (stage)
+    const [vw, vh] = Stage.getVirtualSize (stage)
+    const      vs  = Stage.getVirtualScale(stage)
+    return [
+      (x - lw / 2) / vs + vw / 2,
+      (y - lh / 2) / vs + vh / 2
+    ] satisfies Vector2
+  },
+
+  virtualToLogical(stage: Stage, [x, y]: Vector2) {
+    const [lw, lh] = Stage.getLogicalSize (stage)
+    const [vw, vh] = Stage.getVirtualSize (stage)
+    const      vs  = Stage.getVirtualScale(stage)
+    return [
+      (x - vw / 2) * vs + lw / 2,
+      (y - vw / 2) * vs + lh / 2
+    ] satisfies Vector2
+  },
+
   use(stage: Stage, scene: Scene | undefined) {
     Stage.dispatch(stage, "stage:change", scene)
   },
