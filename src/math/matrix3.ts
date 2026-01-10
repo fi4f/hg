@@ -1,5 +1,5 @@
 import { Vector3 } from "./vector3.js";
-import { ADD, SUB, MUL, DIV, MOD } from "./index.js";
+import { add, sub, mul, div, mod } from "./el.js";
 
 export type Matrix3 = [
   number, number, number,
@@ -199,6 +199,9 @@ export const Matrix3 = {
   __set__,
   xx, xy, xz, yx, yy, yz, zx, zy, zz,
 
+  r0, r1, r2, c0, c1, c2,
+  row, col,
+
   id(a: number = 1) {
     return [
       a, 0, 0,
@@ -249,23 +252,23 @@ export const Matrix3 = {
   },
 
   add(a: number | Matrix3, b: number | Matrix3, out: Matrix3 = Matrix3.new()) {
-    return Matrix3.el(ADD, a, b, out)
+    return Matrix3.el(add, a, b, out)
   },
 
   sub(a: number | Matrix3, b: number | Matrix3, out: Matrix3 = Matrix3.new()) {
-    return Matrix3.el(SUB, a, b, out)
+    return Matrix3.el(sub, a, b, out)
   },
 
   hmul(a: number | Matrix3, b: number | Matrix3, out: Matrix3 = Matrix3.new()) {
-    return Matrix3.el(MUL, a, b, out)
+    return Matrix3.el(mul, a, b, out)
   },
 
   hdiv(a: number | Matrix3, b: number | Matrix3, out: Matrix3 = Matrix3.new()) {
-    return Matrix3.el(DIV, a, b, out)
+    return Matrix3.el(div, a, b, out)
   },
 
   hmod(a: number | Matrix3, b: number | Matrix3, out: Matrix3 = Matrix3.new()) {
-    return Matrix3.el(MOD, a, b, out)
+    return Matrix3.el(mod, a, b, out)
   },
 
   mul(a: number | Matrix3, b: number | Matrix3, out: Matrix3 = Matrix3.new()) {

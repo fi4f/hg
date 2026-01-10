@@ -1,5 +1,5 @@
 import { Vector4 } from "./vector4.js";
-import { ADD, SUB, MUL, DIV, MOD } from "./index.js";
+import { add, sub, mul, div, mod } from "./el.js";
 
 export type Matrix4 = [
   number, number, number, number,
@@ -289,6 +289,8 @@ export const Matrix4 = {
   __get__,
   __set__,
   xx, xy, xz, xw, yx, yy, yz, yw, zx, zy, zz, zw, wx, wy, wz, ww,
+  r0, r1, r2, r3, c0, c1, c2, c3,
+  row, col,
 
   id(a: number = 1) {
     return [
@@ -352,23 +354,23 @@ export const Matrix4 = {
   },
 
   add(a: number | Matrix4, b: number | Matrix4, out: Matrix4 = Matrix4.new()) {
-    return Matrix4.el(ADD, a, b, out)
+    return Matrix4.el(add, a, b, out)
   },
 
   sub(a: number | Matrix4, b: number | Matrix4, out: Matrix4 = Matrix4.new()) {
-    return Matrix4.el(SUB, a, b, out)
+    return Matrix4.el(sub, a, b, out)
   },
 
   hmul(a: number | Matrix4, b: number | Matrix4, out: Matrix4 = Matrix4.new()) {
-    return Matrix4.el(MUL, a, b, out)
+    return Matrix4.el(mul, a, b, out)
   },
 
   hdiv(a: number | Matrix4, b: number | Matrix4, out: Matrix4 = Matrix4.new()) {
-    return Matrix4.el(DIV, a, b, out)
+    return Matrix4.el(div, a, b, out)
   },
 
   hmod(a: number | Matrix4, b: number | Matrix4, out: Matrix4 = Matrix4.new()) {
-    return Matrix4.el(MOD, a, b, out)
+    return Matrix4.el(mod, a, b, out)
   },
 
   mul(a: number | Matrix4, b: number | Matrix4, out: Matrix4 = Matrix4.new()) {

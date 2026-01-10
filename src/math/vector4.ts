@@ -1,4 +1,4 @@
-import { ADD, SUB, MUL, DIV, MOD } from "./index.js";
+import { add, sub, mul, div, mod } from "./el.js";
 
 export type Vector4 = [number, number, number, number]
 
@@ -64,23 +64,23 @@ export const Vector4 = {
   },
 
   add(a: number | Vector4, b: number | Vector4, out: Vector4 = Vector4.new()) {
-    return Vector4.el(ADD, a, b, out)
+    return Vector4.el(add, a, b, out)
   },
 
   sub(a: number | Vector4, b: number | Vector4, out: Vector4 = Vector4.new()) {
-    return Vector4.el(SUB, a, b, out)
+    return Vector4.el(sub, a, b, out)
   },
 
   hmul(a: number | Vector4, b: number | Vector4, out: Vector4 = Vector4.new()) {
-    return Vector4.el(MUL, a, b, out)
+    return Vector4.el(mul, a, b, out)
   },
 
   hdiv(a: number | Vector4, b: number | Vector4, out: Vector4 = Vector4.new()) {
-    return Vector4.el(DIV, a, b, out)
+    return Vector4.el(div, a, b, out)
   },
 
   hmod(a: number | Vector4, b: number | Vector4, out: Vector4 = Vector4.new()) {
-    return Vector4.el(MOD, a, b, out)
+    return Vector4.el(mod, a, b, out)
   },
 
   dot(a: number | Vector4, b: number | Vector4 = a) {

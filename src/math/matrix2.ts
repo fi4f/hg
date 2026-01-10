@@ -1,5 +1,5 @@
 import { Vector2 } from "./vector2.js";
-import { ADD, SUB, MUL, DIV, MOD } from "./index.js";
+import { add, sub, mul, div, mod } from "./el.js";
 
 export type Matrix2 = [
   number, number,
@@ -128,6 +128,8 @@ export const Matrix2 = {
   __get__,
   __set__,
   xx, xy, yx, yy,
+  r0, r1, c0, c1,
+  row, col,
 
   id(a: number = 1) {
     return [
@@ -169,23 +171,23 @@ export const Matrix2 = {
   },
 
   add(a: number | Matrix2, b: number | Matrix2, out: Matrix2 = Matrix2.new()) {
-    return Matrix2.el(ADD, a, b, out)
+    return Matrix2.el(add, a, b, out)
   },
 
   sub(a: number | Matrix2, b: number | Matrix2, out: Matrix2 = Matrix2.new()) {
-    return Matrix2.el(SUB, a, b, out)
+    return Matrix2.el(sub, a, b, out)
   },
 
   hmul(a: number | Matrix2, b: number | Matrix2, out: Matrix2 = Matrix2.new()) {
-    return Matrix2.el(MUL, a, b, out)
+    return Matrix2.el(mul, a, b, out)
   },
 
   hdiv(a: number | Matrix2, b: number | Matrix2, out: Matrix2 = Matrix2.new()) {
-    return Matrix2.el(DIV, a, b, out)
+    return Matrix2.el(div, a, b, out)
   },
 
   hmod(a: number | Matrix2, b: number | Matrix2, out: Matrix2 = Matrix2.new()) {
-    return Matrix2.el(MOD, a, b, out)
+    return Matrix2.el(mod, a, b, out)
   },
 
   mul(a: number | Matrix2, b: number | Matrix2, out: Matrix2 = Matrix2.new()) {
@@ -203,7 +205,6 @@ export const Matrix2 = {
 
     return out
   },
-
 
   toString(a: number | Matrix2) {
     const [
