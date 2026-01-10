@@ -1,6 +1,6 @@
-import { Event } from "./event.js"
-import { Scene } from "./scene.js"
-import type { Maybe } from "../util/types.js"
+import { Event } from "./core/event.js"
+import { Scene } from "./core/scene.js"
+import type { Maybe } from "../types.js"
 import { Vector2 } from "../math/vector2.js"
 
 const  FRAME_INFO = "stage:frame-info"  as const

@@ -1,5 +1,3 @@
-import type { Maybe } from "../util/types.js"
-
 export namespace Event {
   export type Listener<T> = (event: T, context: Event.Context<T>) => void
 
@@ -92,7 +90,7 @@ function flush(tree: Event.Tree, a: Event.Action) {
   }
 }
 
-function requestListeners(node: Maybe<Event.Node>, type: string) {
+function requestListeners(node: Event.Node | undefined, type: string) {
   let list = node?.listeners.get(type)
   // if (!list) node.listeners.set(
   //   type, list = new Set()

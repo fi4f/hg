@@ -1,4 +1,4 @@
-import { Version } from "./util/version.js";
+import { Version } from "./version.js";
 
 export const VERSION = Version.new({
   moniker: "hg",
@@ -8,12 +8,12 @@ export const VERSION = Version.new({
 })
 
 // forward core exports
-export * from "./core/stage.js"
-export * from "./core/scene.js"
-export * from "./core/event.js"
-export * from "./core/asset.js"
-export * from "./core/cache.js"
-export * from "./core/index.js"
+export * from "./stage.js"
+export * from "./scene.js"
+export * from "./event.js"
+export * from "./asset.js"
+export * from "./cache.js"
+export * from "./index.js"
 
 // forward math exports
 export * from "./math/vector2.js"
@@ -24,4 +24,4 @@ export * from "./math/matrix3.js"
 export * from "./math/matrix4.js"
 
 // forward util exports
-export * from "./util/version.js"
+export * from "./version.js"
