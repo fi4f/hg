@@ -1,4 +1,3 @@
-import type { Maybe } from "../types.js"
 import type { Stage } from "./stage.js"
 
 export type Scene = {
@@ -35,11 +34,11 @@ export namespace Scene {
 }
 
 export const Scene = {
-  doesUpdate(a: Maybe<Scene>): a is Scene.DoesUpdate {
+  doesUpdate(a: Scene | undefined): a is Scene.DoesUpdate {
     return !!(a && (a.doUpdate ?? true) && a.onUpdate)
   },
 
-  doesRender(a: Maybe<Scene>): a is Scene.Renderable {
+  doesRender(a: Scene | undefined): a is Scene.Renderable {
     return !!(a && (a.doRender ?? true) && a.onRender)
   }
 }
