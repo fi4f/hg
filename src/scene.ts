@@ -1,4 +1,6 @@
+import type { Input } from "./input.js"
 import type { Stage } from "./stage.js"
+import type { Vector2 } from "./vector2.js"
 
 export type Scene = {
   doUpdate ?: boolean
@@ -8,17 +10,30 @@ export type Scene = {
   onDetach ?: (stage: Stage) => void
   onUpdate ?: (context: Scene.UpdateContext) => void
   onRender ?: (context: Scene.RenderContext) => void
+
+  onKeyUp     ?: (key   : string) => void
+  onKeyDown   ?: (key   : string) => void
+  onMouseUp   ?: (button: number) => void
+  onMouseDown ?: (button: number) => void
+  onMouseMove ?: (where : Vector2) => void
+  onWheel     ?: (wheel : Vector2) => void
 }
 
 export namespace Scene {
   export type UpdateContext = {
     stage: Stage
+    input: Input
+    w : number
+    h : number
     t : number
     dt: number
   }
 
   export type RenderContext = {
     stage: Stage
+    input: Input
+    w : number
+    h : number
     t : number
     dt: number
     g : OffscreenCanvasRenderingContext2D

@@ -1,6 +1,7 @@
-import { Canvas  } from "./canvas.js"
-import { Event   } from "./event.js"
-import { Scene   } from "./scene.js"
+import { Canvas } from "./canvas.js"
+import { Event } from "./event.js"
+import { Input } from "./input.js"
+import { Scene } from "./scene.js"
 import { Vector2 } from "./vector2.js"
 
 export type Stage = {
@@ -23,7 +24,8 @@ export type Stage = {
   // modules
   event: Event.Tree
   debug: Map<string, string | undefined>
-  scene:              Scene | undefined
+  scene: Scene | undefined
+  input: Input
 
   // metrics
   measuredFramesPerSecond : number
@@ -114,6 +116,9 @@ export const Stage = {
       debug: new Map(),
       scene: undefined,
 
+      // hack to defer module initialization
+      input: (undefined as any) as Input,
+
       // metrics
       measuredFramesPerSecond : 0,
 
@@ -138,6 +143,8 @@ export const Stage = {
     new ResizeObserver(() => resize(stage)).observe(logicalCanvasElement)
     Stage.listen<Vector2          >(stage, "stage:resize", resize => onResize(stage, resize))
     Stage.listen<Scene | undefined>(stage, "stage:change", change => onChange(stage, change))
+
+    stage.input = Input.new(stage)
 
     requestAnimationFrame(
       firstFrame => requestAnimationFrame(
@@ -265,8 +272,10 @@ function onChange(stage: Stage, scene: Scene | undefined) {
 
 function update(stage: Stage, t: number, dt: number) {
   Stage.poll(stage)
+
+  const [w, h] = Stage.getVirtualSize(stage)
   if (Scene.doesUpdate(stage.scene))
-    stage.scene.onUpdate({ stage, t, dt })
+    stage.scene.onUpdate({ stage, w, h, t, dt, input: stage.input })
 }
 
 function render(stage: Stage, t: number, dt: number) {
@@ -291,8 +300,9 @@ function render(stage: Stage, t: number, dt: number) {
   )
   f.scale(vs, vs)
   
+  const [w, h] = Stage.getVirtualSize(stage)
   if (Scene.doesRender(stage.scene))
-    stage.scene.onRender({ stage, t, dt, g })
+    stage.scene.onRender({ stage, w, h, t, dt, g, input: stage.input })
 
   f.drawImage(stage.virtualCanvasElement, 0, 0)
 

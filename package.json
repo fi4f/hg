@@ -1,6 +1,6 @@
 {
   "name": "@fi4f/hg",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "A tiny 2d game engine for the web.",
   "homepage": "https://github.com/fi4f/hg#readme",
   "bugs": {
@@ -15,7 +15,9 @@
   "type": "module",
   "main": "dist/hg.js",
   "types": "dist/hg.d.ts",
-  "files": [ "dist" ],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc"
   },
