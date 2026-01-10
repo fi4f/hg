@@ -98,7 +98,7 @@ function requestListeners(node: Event.Node | undefined, type: string) {
   return list
 }
 
-function requireListeners(node:       Event.Node , type: string) {
+function requireListeners(node: Event.Node , type: string) {
   let list = node.listeners.get(type)
   if (!list) node.listeners.set(
     type, list = new Set()
@@ -106,7 +106,7 @@ function requireListeners(node:       Event.Node , type: string) {
   return list
 }
 
-function requestNode(root: Maybe<Event.Node>, path: string) {
+function requestNode(root: Event.Node | undefined, path: string) {
   for (const part of path.split("/")) {
     let node = root?.children.get(part)
     if (!node) return
@@ -116,7 +116,7 @@ function requestNode(root: Maybe<Event.Node>, path: string) {
   return root
 }
 
-function requireNode(root:       Event.Node , path: string) {
+function requireNode(root: Event.Node , path: string) {
   for (const part of path.split("/")) {
     let node = root.children.get(part)
     if (!node) root.children.set(

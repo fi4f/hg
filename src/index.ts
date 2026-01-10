@@ -3,31 +3,31 @@ import { Cache } from "./cache.js";
 
 const CACHE = Cache.new();
 
-export function load(a: Asset<any>) {
+export function load(a: Asset) {
   return Cache.load(CACHE, a);
 }
 
-export function loadImage(a: Asset.Image) {
+export function loadImage(a: Asset & { kind: "image" }) {
   return Cache.loadImage(CACHE, a);
 }
 
-export function loadAudio(a: Asset.Audio) {
+export function loadAudio(a: Asset & { kind: "audio" }) {
   return Cache.loadAudio(CACHE, a);
 }
 
-export function loadText(a: Asset.Text) {
+export function loadText(a: Asset & { kind: "text" }) {
   return Cache.loadText(CACHE, a);
 }
 
-export function loadBlob(a: Asset.Blob) {
+export function loadBlob(a: Asset & { kind: "blob" }) {
   return Cache.loadBlob(CACHE, a);
 }
 
-export function loadJson(a: Asset.Json) {
+export function loadJson(a: Asset & { kind: "json" }) {
   return Cache.loadJson(CACHE, a);
 }
 
-export function loadAll(a: Array<Asset<any>>) {
+export function loadAll(a: Array<Asset>) {
   return Cache.loadAll(CACHE, a);
 }
 

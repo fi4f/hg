@@ -9,7 +9,6 @@ export type Cache = {
 }
 
 export const Cache = {
-
   new() {
     return {
       images: {},
@@ -108,48 +107,47 @@ export const Cache = {
     cache.jsons  = {};
   },
 
-  load(cache: Cache, a: Asset<any>) {
+  load(cache: Cache, a: Asset) {
     switch (a.kind) {
-      case Asset.IMAGE: return Cache.loadImage(cache, a);
-      case Asset.AUDIO: return Cache.loadAudio(cache, a);
-      case Asset.TEXT:  return Cache.loadText (cache, a);
-      case Asset.BLOB:  return Cache.loadBlob (cache, a);
-      case Asset.JSON:  return Cache.loadJson (cache, a);
-      default: throw `[Cache.load]: Unknown kind of asset '${a.kind}'`;
+      case "image": return Cache.loadImage(cache, a);
+      case "audio": return Cache.loadAudio(cache, a);
+      case "text" : return Cache.loadText (cache, a);
+      case "blob" : return Cache.loadBlob (cache, a);
+      case "json" : return Cache.loadJson (cache, a);
     }
   },
 
-  async loadImage(cache: Cache, a: Asset.Image) {
+  async loadImage(cache: Cache, a: Asset & { kind: "image" }) {
     const id = a.id ?? uniqueId(cache.images);
     Cache.putImage(cache, id, await Asset.loadImage(a));
     return id;
   },
 
-  async loadAudio(cache: Cache, a: Asset.Audio) {
+  async loadAudio(cache: Cache, a: Asset & { kind: "audio" }) {
     const id = a.id ?? uniqueId(cache.audios);
     Cache.putAudio(cache, id, await Asset.loadAudio(a));
     return id;
   },
 
-  async loadText(cache: Cache, a: Asset.Text) {
+  async loadText(cache: Cache, a: Asset & { kind: "text" }) {
     const id = a.id ?? uniqueId(cache.texts );
     Cache.putText(cache, id, await Asset.loadText(a));
     return id;
   },
 
-  async loadBlob(cache: Cache, a: Asset.Blob) {
+  async loadBlob(cache: Cache, a: Asset & { kind: "blob" }) {
     const id = a.id ?? uniqueId(cache.blobs );
     Cache.putBlob(cache, id, await Asset.loadBlob(a));
     return id;
   },
 
-  async loadJson(cache: Cache, a: Asset.Json) {
+  async loadJson(cache: Cache, a: Asset & { kind: "json" }) {
     const id = a.id ?? uniqueId(cache.jsons );
     Cache.putJson(cache, id, await Asset.loadJson(a));
     return id;
   },
 
-  async loadAll(cache: Cache, a: Array<Asset<any>>) {
+  async loadAll(cache: Cache, a: Array<Asset>) {
     return Promise.all(a.map(a => Cache.load(cache, a)));
   }
 }

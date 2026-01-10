@@ -16,12 +16,12 @@ export * from "./cache.js"
 export * from "./index.js"
 
 // forward math exports
-export * from "./math/vector2.js"
-export * from "./math/vector3.js"
-export * from "./math/vector4.js"
-export * from "./math/matrix2.js"
-export * from "./math/matrix3.js"
-export * from "./math/matrix4.js"
+export * from "./vector2.js"
+export * from "./vector3.js"
+export * from "./vector4.js"
+export * from "./matrix2.js"
+export * from "./matrix3.js"
+export * from "./matrix4.js"
 
 // forward util exports
 export * from "./version.js"

@@ -1,28 +1,17 @@
-import { Event } from "./core/event.js"
-import { Scene } from "./core/scene.js"
-import type { Maybe } from "../types.js"
-import { Vector2 } from "../math/vector2.js"
-
-const  FRAME_INFO = "stage:frame-info"  as const
-const UPDATE_INFO = "stage:update-info" as const
-const RENDER_INFO = "stage:render-info" as const
-const CANVAS_INFO = "stage:canvas-info" as const
-
-// events
-const RESIZE = "stage:resize" as const
-const CHANGE = "stage:change" as const
+import { Canvas  } from "./canvas.js"
+import { Event   } from "./event.js"
+import { Scene   } from "./scene.js"
+import { Vector2 } from "./vector2.js"
 
 export type Stage = {
   // configure
-  readonly configureDebug             : "print" | "paint" | boolean
-  readonly configureW                 : number
-  readonly configureH                 : number
-  readonly configureUpdatesPerSecond  : number
-  readonly configureRendersPerSecond  : number
-  readonly configureLogicalBackground : string
-  readonly configureVirtualBackground : string
-  readonly configureScaleIncrement   ?: number                | undefined
-  readonly configureImageSmoothing   ?: ImageSmoothingQuality | undefined
+  readonly configureDebug            : "print" | "paint" | boolean
+  readonly configureW                : number
+  readonly configureH                : number
+  readonly configureLogicalBackground: string
+  readonly configureVirtualBackground: string
+  readonly configureScaleIncrement   : number                | undefined
+  readonly configureImageSmoothing   : ImageSmoothingQuality | undefined
 
   // canvas
   logicalCanvasElement: HTMLCanvasElement
@@ -31,79 +20,63 @@ export type Stage = {
   virtualCanvasContext: OffscreenCanvasRenderingContext2D
   virtualScale: number
 
-  // data
-  eventTree: Event.Tree
-  debugInfo: Map<string, string | undefined>
-
-  // scene
-  scene ?: Scene | undefined
+  // modules
+  event: Event.Tree
+  debug: Map<string, string | undefined>
+  scene:              Scene | undefined
 
   // metrics
-  lastUpdate      : number
-  lastRender      : number
-  millisPerUpdate : number
-  millisPerRender : number
-  framesPerSecond : number
-  updatesPerSecond: number
-  rendersPerSecond: number
+  measuredFramesPerSecond : number
 
-  averageMillisPerUpdate: number
-  minimumMillisPerUpdate: number
-  maximumMillisPerUpdate: number
+  measuredAverageFrame : number
+  measuredMinimumFrame : number
+  measuredMaximumFrame : number
 
-  averageMillisPerRender: number
-  minimumMillisPerRender: number
-  maximumMillisPerRender: number
-  
-  oneSecondAccumulator: number
-  updateAccumulator   : number
-  renderAccumulator   : number
+  measuredAverageUpdate: number
+  measuredMinimumUpdate: number
+  measuredMaximumUpdate: number
 
-  framesPerSecondAccumulator : number
-  updatesPerSecondAccumulator: number
-  rendersPerSecondAccumulator: number
-
-  averageMillisPerUpdateAccumulator: number
-  minimumMillisPerUpdateAccumulator: number
-  maximumMillisPerUpdateAccumulator: number
-
-  averageMillisPerRenderAccumulator: number
-  minimumMillisPerRenderAccumulator: number
-  maximumMillisPerRenderAccumulator: number
+  measuredAverageRender: number
+  measuredMinimumRender: number
+  measuredMaximumRender: number
 }
 
+export namespace Stage {
+  export type Options = {
+    canvas ?: HTMLCanvasElement
+    debug  ?: "print" | "paint" | boolean
+    w      ?: number
+    h      ?: number
+    lbg    ?: string
+    vbg    ?: string
+    si     ?: number
+    is     ?: ImageSmoothingQuality
+  }
+}
+
+/**
+ * A collection of constants and functions for constructing and
+ * interacting with Stage objects.
+ */
 export const Stage = {
-  RESIZE, CHANGE,
-  new(c: HTMLCanvasElement, o ?: {
-    debug ?: "print" | "paint" | boolean
-    w     ?: number
-    h     ?: number
-    ups   ?: number
-    rps   ?: number
-    lbg   ?: string
-    vbg   ?: string
-    si    ?: number
-    is    ?: ImageSmoothingQuality
-  }) {
+  new(o ?: Stage.Options) {
     const configureDebug             = o?.debug ?? false
     const configureW                 = o?.w     ?? 0
     const configureH                 = o?.h     ?? 0
-    const configureUpdatesPerSecond  = o?.ups   ?? 0
-    const configureRendersPerSecond  = o?.rps   ?? 0
     const configureLogicalBackground = o?.lbg   ?? "#000"
     const configureVirtualBackground = o?.vbg   ?? "#fff"
     const configureScaleIncrement    = o?.si
     const configureImageSmoothing    = o?.is
 
-    const logicalCanvasElement = c
+    const logicalCanvasElement = o?.canvas ?? Canvas.Default()
     const virtualCanvasElement = new OffscreenCanvas(
       configureW || logicalCanvasElement.width,
       configureH || logicalCanvasElement.height
     )
-
     const logicalCanvasContext = logicalCanvasElement.getContext("2d")!
     const virtualCanvasContext = virtualCanvasElement.getContext("2d")!
 
+    // configure image smoothing
     logicalCanvasContext.imageSmoothingEnabled = !!configureImageSmoothing
     virtualCanvasContext.imageSmoothingEnabled = !!configureImageSmoothing
     if (configureImageSmoothing) {
@@ -111,6 +84,7 @@ export const Stage = {
       virtualCanvasContext.imageSmoothingQuality = configureImageSmoothing
     }
 
+    // configure virtual scale
     let virtualScale = Math.min(
       logicalCanvasElement.width  / virtualCanvasElement.width,
       logicalCanvasElement.height / virtualCanvasElement.height
@@ -118,71 +92,52 @@ export const Stage = {
     if (configureScaleIncrement)
       virtualScale = Math.floor(virtualScale / configureScaleIncrement) * configureScaleIncrement
 
-    const millisPerUpdate = configureUpdatesPerSecond ? 1000 / configureUpdatesPerSecond : 0
-    const millisPerRender = configureRendersPerSecond ? 1000 / configureRendersPerSecond : 0
-
     const stage = {
+      // configuration
       configureDebug,
       configureW,
       configureH,
-      configureUpdatesPerSecond,
-      configureRendersPerSecond,
       configureLogicalBackground,
       configureVirtualBackground,
       configureScaleIncrement,
       configureImageSmoothing,
 
+      // canvas
       logicalCanvasElement,
       virtualCanvasElement,
       logicalCanvasContext,
       virtualCanvasContext,
       virtualScale,
 
-      eventTree: Event.Tree.new(),
-      debugInfo: new Map(),
-      
-      lastUpdate: 0,
-      lastRender: 0,
-      millisPerUpdate,
-      millisPerRender,
-      framesPerSecond : 0,
-      updatesPerSecond: 0,
-      rendersPerSecond: 0,
+      // data
+      event: Event.Tree.new(),
+      debug: new Map(),
+      scene: undefined,
 
-      averageMillisPerUpdate: 0,
-      minimumMillisPerUpdate: 0,
-      maximumMillisPerUpdate: 0,
+      // metrics
+      measuredFramesPerSecond : 0,
 
-      averageMillisPerRender: 0,
-      minimumMillisPerRender: 0,
-      maximumMillisPerRender: 0,
+      measuredAverageFrame : 0,
+      measuredMinimumFrame : 0,
+      measuredMaximumFrame : 0,
 
-      oneSecondAccumulator: 0,
-      updateAccumulator: 0,
-      renderAccumulator: 0,
+      measuredAverageUpdate: 0,
+      measuredMinimumUpdate: 0,
+      measuredMaximumUpdate: 0,
 
-      framesPerSecondAccumulator : 0,
-      updatesPerSecondAccumulator: 0,
-      rendersPerSecondAccumulator: 0,
-
-      averageMillisPerUpdateAccumulator: 0,
-      minimumMillisPerUpdateAccumulator: Infinity,
-      maximumMillisPerUpdateAccumulator: 0,
-
-      averageMillisPerRenderAccumulator: 0,
-      minimumMillisPerRenderAccumulator: Infinity,
-      maximumMillisPerRenderAccumulator: 0,
+      measuredAverageRender: 0,
+      measuredMinimumRender: 0,
+      measuredMaximumRender: 0,
     } satisfies Stage
 
-    // ensure these debug infos appear near the top of each debug view
-    Stage.setDebugInfo(stage, FRAME_INFO , undefined)
-    Stage.setDebugInfo(stage, UPDATE_INFO, undefined)
-    Stage.setDebugInfo(stage, RENDER_INFO, undefined)
-    Stage.setDebugInfo(stage, CANVAS_INFO, undefined)
+    Stage.setDebugInfo(stage, "stage:frameInfo" , undefined)
+    Stage.setDebugInfo(stage, "stage:updateInfo", undefined)
+    Stage.setDebugInfo(stage, "stage:renderInfo", undefined)
+    Stage.setDebugInfo(stage, "stage:canvasInfo", undefined)
 
-    new ResizeObserver(() => resize(stage)).observe(c)
-    Stage.listen<     Vector2>(stage, RESIZE, wh => onResize(stage, wh))
-    Stage.listen<Maybe<Scene>>(stage, CHANGE, sc => onChange(stage, sc))
+    new ResizeObserver(() => resize(stage)).observe(logicalCanvasElement)
+    Stage.listen<Vector2          >(stage, "stage:resize", resize => onResize(stage, resize))
+    Stage.listen<Scene | undefined>(stage, "stage:change", change => onChange(stage, change))
 
     requestAnimationFrame(
       firstFrame => requestAnimationFrame(
@@ -213,42 +168,43 @@ export const Stage = {
     return stage.virtualScale
   },
 
-  change(stage: Stage, scene: Maybe<Scene>) {
-    Stage.dispatch(stage, CHANGE, scene)
+  use(stage: Stage, scene: Scene | undefined) {
+    Stage.dispatch(stage, "stage:change", scene)
   },
 
   listen<T>(stage: Stage, type  : string, listener  : Event.Listener<T>, o ?: { path ?: string, defer ?: boolean }) {
-    Event.listen(stage.eventTree, type, listener, o)
+    Event.listen(stage.event, type, listener, o)
   },
 
   deafen<T>(stage: Stage, type ?: string, listener ?: Event.Listener<T>, o ?: { path ?: string, defer ?: boolean }) {
-    Event.deafen(stage.eventTree, type, listener, o)
+    Event.deafen(stage.event, type, listener, o)
   },
 
   dispatch<T>(stage: Stage, type: string, event: T, o ?: { path ?: string, defer ?: boolean }) {
-    Event.dispatch(stage.eventTree, type, event, o)
+    Event.dispatch(stage.event, type, event, o)
   },
 
   poll(stage: Stage) {
-    Event.poll(stage.eventTree)
+    Event.poll(stage.event)
   },
 
   getDebugInfo(stage: Stage, id: string) {
-    return stage.debugInfo.get(id)
+    return stage.debug.get(id)
   },
 
   setDebugInfo(stage: Stage, id: string, info: string | undefined) {
-    stage.debugInfo.set(id, info)
+    stage.debug.set(id, info)
   }
 }
 
 function resize(stage: Stage) {
   const w = stage.logicalCanvasElement.getBoundingClientRect().width
   const h = stage.logicalCanvasElement.getBoundingClientRect().height
-  Stage.dispatch(stage, RESIZE, [w, h])
+  Stage.dispatch(stage, "stage:resize", [w, h])
 }
 
 function onResize(stage: Stage, [w, h]: Vector2) {
+  // compute new canvas sizes
   stage.logicalCanvasElement.width  = w
   stage.logicalCanvasElement.height = h
   stage.virtualCanvasElement = new OffscreenCanvas(
@@ -256,9 +212,11 @@ function onResize(stage: Stage, [w, h]: Vector2) {
     stage.configureH || stage.logicalCanvasElement.height
   )
 
+  // new canvas contexts
   stage.logicalCanvasContext = stage.logicalCanvasElement.getContext("2d")!
   stage.virtualCanvasContext = stage.virtualCanvasElement.getContext("2d")!
 
+  // configure image smoothing
   stage.logicalCanvasContext.imageSmoothingEnabled = !!stage.configureImageSmoothing
   stage.virtualCanvasContext.imageSmoothingEnabled = !!stage.configureImageSmoothing
   if (stage.configureImageSmoothing) {
@@ -266,6 +224,7 @@ function onResize(stage: Stage, [w, h]: Vector2) {
     stage.virtualCanvasContext.imageSmoothingQuality = stage.configureImageSmoothing
   }
 
+  // configure virtual scale
   stage.virtualScale = Math.min(
     stage.logicalCanvasElement.width  / stage.virtualCanvasElement.width,
     stage.logicalCanvasElement.height / stage.virtualCanvasElement.height
@@ -273,10 +232,10 @@ function onResize(stage: Stage, [w, h]: Vector2) {
   if (stage.configureScaleIncrement)
     stage.virtualScale = Math.floor(stage.virtualScale / stage.configureScaleIncrement) * stage.configureScaleIncrement
 
-  Stage.setDebugInfo(stage, CANVAS_INFO, getCanvasInfo(stage))
+  Stage.setDebugInfo(stage, "stage:canvasInfo", getCanvasInfo(stage))
 }
 
-function onChange(stage: Stage, scene: Maybe<Scene>) {
+function onChange(stage: Stage, scene: Scene | undefined) {
   if (stage.scene && stage.scene.onDetach)
     stage.scene.onDetach(stage)
   stage.scene = scene
@@ -318,106 +277,133 @@ function render(stage: Stage, t: number, dt: number) {
   f.drawImage(stage.virtualCanvasElement, 0, 0)
 
   if (stage.configureDebug && stage.configureDebug !== "print")
-    paintDebugInfos(stage)
+    paintDebugInfo(stage)
 }
 
-function animate(stage: Stage, firstFrame: number, lastFrame: number, thisFrame: number) {
-  const delta = thisFrame - lastFrame
+type Timing = {
+  framesPerSecondAccumulator: number
 
-  stage.oneSecondAccumulator += delta
-  stage.updateAccumulator    += delta
-  stage.renderAccumulator    += delta
+  averageFrameAccumulator : number
+  minimumFrameAccumulator : number
+  maximumFrameAccumulator : number
 
-  stage.framesPerSecondAccumulator += 1
+  averageUpdateAccumulator: number
+  minimumUpdateAccumulator: number
+  maximumUpdateAccumulator: number
 
-  if (stage.updateAccumulator >= stage.millisPerUpdate) {
-    const t  = (thisFrame -       firstFrame) / 1000
-    const dt = (thisFrame - stage.lastUpdate) / 1000
+  averageRenderAccumulator: number
+  minimumRenderAccumulator: number
+  maximumRenderAccumulator: number
 
-    const a = performance.now()
-    update(stage, t, dt)
-    const b = performance.now()
+  oneSecondAccumulator: number
+}
 
-    const millisThisUpdate = b - a
+const Timing = {
+  new() {
+    return {
+      framesPerSecondAccumulator: 0,
 
-    stage.lastUpdate = thisFrame
-    stage.updatesPerSecondAccumulator += 1
-    stage.updateAccumulator -= stage.millisPerUpdate
+      averageFrameAccumulator   : 0,
+      minimumFrameAccumulator   : Infinity,
+      maximumFrameAccumulator   : 0,
 
-    stage.averageMillisPerUpdateAccumulator += millisThisUpdate
-    stage.minimumMillisPerUpdateAccumulator  = Math.min(millisThisUpdate, stage.minimumMillisPerUpdateAccumulator)
-    stage.maximumMillisPerUpdateAccumulator  = Math.max(millisThisUpdate, stage.maximumMillisPerUpdateAccumulator)
+      averageUpdateAccumulator  : 0,
+      minimumUpdateAccumulator  : Infinity,
+      maximumUpdateAccumulator  : 0,
+
+      averageRenderAccumulator  : 0,
+      minimumRenderAccumulator  : Infinity,
+      maximumRenderAccumulator  : 0,
+
+      oneSecondAccumulator      : 0,
+    } satisfies Timing
   }
+}
 
-  if (stage.renderAccumulator >= stage.millisPerRender) {
-    const t  = (thisFrame -       firstFrame) / 1000
-    const dt = (thisFrame - stage.lastRender) / 1000
+function animate(stage: Stage, t0: number, t1: number, t2: number, m ?: Timing) {
+  m ??= Timing.new()
 
-    const a = performance.now()
-    render(stage, t, dt)
-    const b = performance.now()
+  const t  = (t2 - t0) / 1000
+  const dt = (t2 - t1) / 1000
 
-    const millisThisRender = b - a
+  const a = performance.now()
+  update(stage, t, dt)
+  const b = performance.now()
+  render(stage, t, dt)
+  const c = performance.now()
 
-    stage.lastRender = thisFrame
-    stage.rendersPerSecondAccumulator += 1
-    stage.renderAccumulator -= stage.millisPerRender
+  const deltaFrame  = c - a
+  const deltaUpdate = b - a
+  const deltaRender = c - b
 
-    stage.averageMillisPerRenderAccumulator += millisThisRender
-    stage.minimumMillisPerRenderAccumulator  = Math.min(millisThisRender, stage.minimumMillisPerRenderAccumulator)
-    stage.maximumMillisPerRenderAccumulator  = Math.max(millisThisRender, stage.maximumMillisPerRenderAccumulator)
-  }
+  m.framesPerSecondAccumulator += 1
 
-  if (stage.oneSecondAccumulator >= 1000) {
-    // update metrics
-    stage.framesPerSecond  = stage.framesPerSecondAccumulator
-    stage.updatesPerSecond = stage.updatesPerSecondAccumulator
-    stage.rendersPerSecond = stage.rendersPerSecondAccumulator
+  m.averageFrameAccumulator   += deltaFrame
+  m.minimumFrameAccumulator    = Math.min(deltaFrame , m.minimumFrameAccumulator )
+  m.maximumFrameAccumulator    = Math.max(deltaFrame , m.maximumFrameAccumulator )
 
-    stage.averageMillisPerUpdate = stage.averageMillisPerUpdateAccumulator / stage.updatesPerSecondAccumulator
-    stage.minimumMillisPerUpdate = stage.minimumMillisPerUpdateAccumulator
-    stage.maximumMillisPerUpdate = stage.maximumMillisPerUpdateAccumulator
+  m.averageUpdateAccumulator  += deltaUpdate
+  m.minimumUpdateAccumulator   = Math.min(deltaUpdate, m.minimumUpdateAccumulator)
+  m.maximumUpdateAccumulator   = Math.max(deltaUpdate, m.maximumUpdateAccumulator)
 
-    stage.averageMillisPerRender = stage.averageMillisPerRenderAccumulator / stage.rendersPerSecondAccumulator
-    stage.minimumMillisPerRender = stage.minimumMillisPerRenderAccumulator
-    stage.maximumMillisPerRender = stage.maximumMillisPerRenderAccumulator
+  m.averageRenderAccumulator  += deltaRender
+  m.minimumRenderAccumulator   = Math.min(deltaRender, m.minimumRenderAccumulator)
+  m.maximumRenderAccumulator   = Math.max(deltaRender, m.maximumRenderAccumulator)
+
+  m.oneSecondAccumulator += dt
+
+  if (m.oneSecondAccumulator >= 1) {
+    stage.measuredFramesPerSecond  = m.framesPerSecondAccumulator
+
+    stage.measuredAverageFrame  = m.averageFrameAccumulator / m.framesPerSecondAccumulator
+    stage.measuredMinimumFrame  = m.minimumFrameAccumulator
+    stage.measuredMaximumFrame  = m.maximumFrameAccumulator
+
+    stage.measuredAverageUpdate = m.averageUpdateAccumulator / m.framesPerSecondAccumulator
+    stage.measuredMinimumUpdate = m.minimumUpdateAccumulator
+    stage.measuredMaximumUpdate = m.maximumUpdateAccumulator
+
+    stage.measuredAverageRender = m.averageRenderAccumulator / m.framesPerSecondAccumulator
+    stage.measuredMinimumRender = m.minimumRenderAccumulator
+    stage.measuredMaximumRender = m.maximumRenderAccumulator
 
     // reset accumulators
-    stage.framesPerSecondAccumulator  = 0
-    stage.updatesPerSecondAccumulator = 0
-    stage.rendersPerSecondAccumulator = 0
+    m.framesPerSecondAccumulator  = 0
 
-    stage.averageMillisPerUpdateAccumulator = 0
-    stage.minimumMillisPerUpdateAccumulator = Infinity
-    stage.maximumMillisPerUpdateAccumulator = 0
+    m.averageFrameAccumulator   = 0
+    m.minimumFrameAccumulator   = Infinity
+    m.maximumFrameAccumulator   = 0
 
-    stage.averageMillisPerRenderAccumulator = 0
-    stage.minimumMillisPerRenderAccumulator = Infinity
-    stage.maximumMillisPerRenderAccumulator = 0
+    m.averageUpdateAccumulator  = 0
+    m.minimumUpdateAccumulator  = Infinity
+    m.maximumUpdateAccumulator  = 0
 
-    stage.oneSecondAccumulator -= 1000
+    m.averageRenderAccumulator  = 0
+    m.minimumRenderAccumulator  = Infinity
+    m.maximumRenderAccumulator  = 0
 
-    Stage.setDebugInfo(stage, FRAME_INFO , getFrameInfo (stage))
-    Stage.setDebugInfo(stage, UPDATE_INFO, getUpdateInfo(stage))
-    Stage.setDebugInfo(stage, RENDER_INFO, getRenderInfo(stage))
+    m.oneSecondAccumulator      = 0
 
-    if (stage.configureDebug && stage.configureDebug !== "paint")
-      printDebugInfos(stage)
+    Stage.setDebugInfo(stage, "stage:frameInfo" , getFrameInfo (stage))
+    Stage.setDebugInfo(stage, "stage:updateInfo", getUpdateInfo(stage))
+    Stage.setDebugInfo(stage, "stage:renderInfo", getRenderInfo(stage))
+    if (stage.configureDebug && stage.configureDebug !== "print")
+      printDebugInfo(stage)
   }
 
-  requestAnimationFrame(nextFrame => animate(stage, firstFrame, thisFrame, nextFrame))
+  requestAnimationFrame(t3 => animate(stage, t0, t2, t3))
 }
 
 function getFrameInfo(stage: Stage) {
-  return `FRAME  ${stage.framesPerSecond.toFixed(0)} hz`
+  return `FRAME ${stage.measuredFramesPerSecond.toFixed(0)} hz @ ${stage.measuredAverageFrame.toFixed(2)} [${stage.measuredMinimumFrame.toFixed(2)} - ${stage.measuredMaximumFrame.toFixed(2)}] ms`
 }
 
 function getUpdateInfo(stage: Stage) {
-  return `UPDATE ${stage.updatesPerSecond.toFixed(0)} hz @ ${stage.averageMillisPerUpdate.toFixed(2)} [${stage.minimumMillisPerUpdate.toFixed(2)} - ${stage.maximumMillisPerUpdate.toFixed(2)}] of ${stage.millisPerUpdate.toFixed(2)} ms`
+  return `UPDATE ${stage.measuredAverageFrame.toFixed(2)} [${stage.measuredMinimumFrame.toFixed(2)} - ${stage.measuredMaximumFrame.toFixed(2)}] ms`
 }
 
 function getRenderInfo(stage: Stage) {
-  return `RENDER ${stage.rendersPerSecond.toFixed(0)} hz @ ${stage.averageMillisPerRender.toFixed(2)} [${stage.minimumMillisPerRender.toFixed(2)} - ${stage.maximumMillisPerRender.toFixed(2)}] of ${stage.millisPerRender.toFixed(2)} ms`
+  return `RENDER ${stage.measuredAverageFrame.toFixed(2)} [${stage.measuredMinimumFrame.toFixed(2)} - ${stage.measuredMaximumFrame.toFixed(2)}] ms`
 }
 
 function getCanvasInfo(stage: Stage) {
@@ -427,31 +413,33 @@ function getCanvasInfo(stage: Stage) {
   return `CANVAS ${lw}x${lh} ${vw}x${vh} ${(100 * vs).toFixed(2)}%`
 }
 
-function printDebugInfos(stage: Stage) {
+function printDebugInfo(stage: Stage) {
   let infos = "*** DEBUG ***\n"
-  for (const [id, info] of stage.debugInfo) {
+  for (const [id, info] of stage.debug) {
     if (!info) continue
     infos += `${info}\n`
   }
   console.log(infos)
 }
 
-function paintDebugInfos(stage: Stage) {
+const configureDebugInfoBackground = "#000a"
+const configureDebugInfoForeground = "#ffff"
+const configureDebugInfoPaddingL   = 10 as const
+const configureDebugInfoPaddingR   = 10 as const
+const configureDebugInfoPaddingT   = 10 as const
+const configureDebugInfoPaddingB   = 10 as const
+const configureDebugInfoSpacing    =  0 as const
+const configureDebugInfoFont       = "16px monospace" as const
+
+function paintDebugInfo(stage: Stage) {
   const g = stage.logicalCanvasContext
 
-  const configureDebugBackground = "#000a"
-  const configureDebugForeground = "#ffff"
-  const configurePaddingX = 10 as const
-  const configurePaddingY = 10 as const
-  const configureSpacingY = 0  as const
-  const configureFont     = "16px monospace" as const
-
   g.resetTransform()
-  g.font = configureFont
+  g.font = configureDebugInfoFont
 
   let w = 0;
   let h = 0;   
-  for (const [id, info] of stage.debugInfo) {
+  for (const [id, info] of stage.debug) {
     if (!info) continue
 
     const tm = g.measureText(info)
@@ -459,33 +447,33 @@ function paintDebugInfos(stage: Stage) {
     h += (
       tm.fontBoundingBoxAscent  + 
       tm.fontBoundingBoxDescent +
-      configureSpacingY
+      configureDebugInfoSpacing
     )
   }
 
   if (h > 0) {
-    w += configurePaddingX * 2
-    h += configurePaddingY * 2
-    h -= configureSpacingY
+    w += configureDebugInfoPaddingL + configureDebugInfoPaddingR
+    h += configureDebugInfoPaddingT + configureDebugInfoPaddingB
+    h -= configureDebugInfoSpacing
   }
 
   // draw background
-  g.fillStyle = configureDebugBackground
+  g.fillStyle = configureDebugInfoBackground
   g.fillRect(0, 0, w, h)
 
   // draw foreground
-  g.fillStyle = configureDebugForeground
-  let x = configurePaddingX
-  let y = configurePaddingY
-  for (const [id, info] of stage.debugInfo) {
+  g.fillStyle = configureDebugInfoForeground
+  let x = configureDebugInfoPaddingL
+  let y = configureDebugInfoPaddingT
+  for (const [id, info] of stage.debug) {
     if (!info) continue
 
     const tm = g.measureText(info)
     g.fillText(info, x, y + tm.fontBoundingBoxAscent)
     y += (
-      configureSpacingY + 
-      tm.fontBoundingBoxAscent +
-      tm.fontBoundingBoxDescent
+      tm.fontBoundingBoxAscent  +
+      tm.fontBoundingBoxDescent +
+      configureDebugInfoSpacing
     )
   }
 }

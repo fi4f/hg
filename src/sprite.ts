@@ -1,4 +1,4 @@
-import type { Scene } from "./core/scene.js"
+import type { Scene } from "./scene.js"
 
 
 const PLAYING =  1 // play once
