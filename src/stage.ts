@@ -387,7 +387,7 @@ function animate(stage: Stage, t0: number, t1: number, t2: number, m ?: Metrics)
     Stage.setDebugInfo(stage, "stage:frameInfo" , getFrameInfo (stage))
     Stage.setDebugInfo(stage, "stage:updateInfo", getUpdateInfo(stage))
     Stage.setDebugInfo(stage, "stage:renderInfo", getRenderInfo(stage))
-    if (stage.configureDebug && stage.configureDebug !== "print")
+    if (stage.configureDebug && stage.configureDebug !== "paint")
       printDebugInfo(stage)
   }
 
