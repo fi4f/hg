@@ -171,6 +171,6 @@ export const Vector2 = {
    * ```
    */
   toString([x, y]:  Vector2) {
-    return `vec2<${x}, ${y}>` as const
+    return `vec2<${x.toFixed(2)}, ${y.toFixed(2)}>` as const
   }
 }

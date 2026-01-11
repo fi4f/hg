@@ -192,6 +192,6 @@ export const Vector3 = {
    * ```
    */
   toString([x, y, z]:  Vector3) {
-    return `vec3<${x}, ${y}, ${z}>` as const
+    return `vec3<${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}>` as const
   }
 }

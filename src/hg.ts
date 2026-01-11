@@ -14,6 +14,7 @@ export * from "./event.js"
 export * from "./asset.js"
 export * from "./cache.js"
 export * from "./index.js"
+export * from "./input.js"
 export * from "./frames.js"
 export * from "./sprite.js"
 

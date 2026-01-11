@@ -210,6 +210,6 @@ export const Vector4 = {
    * ```
    */
   toString([x, y, z, w]:  Vector4) {
-    return `vec4<${x}, ${y}, ${z}, ${w}>` as const
+    return `vec4<${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}, ${w.toFixed(2)}>` as const
   }
 }
