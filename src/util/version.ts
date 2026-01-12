@@ -1,3 +1,5 @@
+import type { Plain } from "./plain.js";
+
 export type Version = {
   readonly moniker: string;
   readonly major  : number;

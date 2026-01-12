@@ -1,5 +1,5 @@
 import { Id } from "./id.js"
-import type { Plain } from "./data/plain.js"
+import type { Plain } from "../util/plain.js"
 
 export namespace Event {
   export type Listener<E extends Plain> = {
