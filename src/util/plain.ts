@@ -1,4 +1,4 @@
-export type Plain = Plain.Any
+export type Plain<T extends Plain.Any> = T
 
 export namespace Plain {
   export type Any =

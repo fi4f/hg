@@ -1,4 +1,4 @@
-import { Id, Vector2 } from "../hg.js"
+import { Id, Vector2, type Plain } from "../hg.js"
 
 export type Input = {
   keyboard: Input.Keyboard
@@ -12,31 +12,31 @@ export type Input = {
 }
 
 export namespace Input {
-  export type Keyboard = {
+  export type Keyboard = Plain<{
     [key: string]: boolean
-  }
+  }>
 
-  export type Pointer = {
+  export type Pointer = Plain<{
     id       : number
     kind     : "pen" | "touch" | "mouse"
     where    : Vector2
     buttons  : number
-  }
+  }>
 
-  export type Pointers = {
+  export type Pointers = Plain<{
     [id   : number]: Pointer
-  }
+  }>
 
-  export type Gamepad = {
+  export type Gamepad = Plain<{
     isConnected: boolean
     buttons: Array<boolean>
     axes   : Array<number >
     index  : number
-  }
+  }>
 
-  export type Gamepads = {
+  export type Gamepads = Plain<{
     [index: number]: Gamepad
-  }
+  }>
 
   export type GamepadConnected    = {
     native: Id<GamepadEvent>
@@ -140,37 +140,38 @@ function onNativeWheel        (input: Input, native: WheelEvent   ) {
 }
 
 function onGamepadConnected   (input: Input, e: Input.GamepadConnected   ) {
-
+  Id.release(e.native)
 }
 
 function onGamepadDisconnected(input: Input, e: Input.GamepadDisconnected) {
-
+  Id.release(e.native)
 }
 
 function onKeyUp              (input: Input, e: Input.KeyUp              ) {
-
+  Id.release(e.native)
 }
 
 function onKeyDown            (input: Input, e: Input.KeyDown            ) {
-
+  Id.release(e.native)
 }
 
 function onPointerUp          (input: Input, e: Input.PointerUp          ) {
-
+  Id.release(e.native)
 }
 
 function onPointerDown        (input: Input, e: Input.PointerDown        ) {
-
+  Id.release(e.native)
 }
 
 function onPointerMove        (input: Input, e: Input.PointerMove        ) {
-
+  Id.release(e.native)
 }
 
 function onPointerCancel      (input: Input, e: Input.PointerCancel      ) {
-
+  Id.release(e.native)
 }
 
 function onWheel              (input: Input, e: Input.Wheel              ) {
   input.wheel = [...e.delta] satisfies Vector2
+  Id.release(e.native)
 }
