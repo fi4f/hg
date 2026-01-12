@@ -1,28 +1,37 @@
+import { Id } from "./id.js"
+import type { Plain } from "./data/plain.js"
+
 export namespace Event {
-  export type Listener<T> = (event: T, context: Event.Context<T>) => void
+  export type Listener<E extends Plain> = {
+    (what: E, also: Context<E>): void
+  }
 
-  export type Listen   = { action: "listen"  , path: string, type  : string            , listener  : Listener<any>             }
-  export type Deafen   = { action: "deafen"  , path: string, type ?: string | undefined, listener ?: Listener<any> | undefined }
-  export type Dispatch = { action: "dispatch", path: string, type: string, event: any }
+  export type Context <E extends Plain> = {
+    tree: Tree
+    node: Node
+    path: string
+    when: string
+    self: Id<Listener<E>>
+  }
 
-  export type Action = Listen | Deafen | Dispatch
+  export type Action = 
+    | { action: "listen"  , path: string, when: string       , then: Id<Listener<any>>        }
+    | { action: "deafen"  , path: string, when: string | null, then: Id<Listener<any>> | null }
+    | { action: "dispatch", path: string, when: string, what: Plain }
 
   export type Tree = {
-    root   :       Event.Node   
+    root   : Event.Node
     pending: Array<Event.Action>
   }
 
   export type Node = {
-    children : Map<string,     Event.Node          >
-    listeners: Map<string, Set<Event.Listener<any>>>
+    children : {[id: string]: Node                    }
+    listeners: {[id: string]: Array<Id<Listener<any>>>}
   }
 
-  export type Context<T> = {
-    tree: Event.Tree
-    node: Event.Node
-    path: string
-    type: string
-    self: Event.Listener<T>
+  export type Options = {
+    path  ?: string
+    defer ?: boolean
   }
 }
 
@@ -39,34 +48,41 @@ export const Event = {
   Node: {
     new() {
       return {
-        children : new Map(),
-        listeners: new Map()
+        children : { },
+        listeners: { }
       } satisfies Event.Node
     }
   },
 
-  once<T>(listener: Event.Listener<T>) {
-    return ((event: T, context: Event.Context<T>) => {
-      listener(event, context)
-      const { tree, path, type, self } = context
-      Event.deafen(tree, type, self, { path, defer: false })
-    }) satisfies Event.Listener<T>
+  once<E extends Plain>(then: Id<Event.Listener<E>> | Event.Listener<E>) {
+    return Id.acquire<Event.Listener<E>>((what, also) => {
+      if (typeof then === "string")
+        then = Id.resolve(then)
+      then(what, also)
+
+      Event.deafen(
+        also.tree, 
+        also.when, 
+        also.self,
+        { path: also.path, defer: false }
+      )
+    })
   },
 
-  listen<T>(tree: Event.Tree, type  : string, listener  : Event.Listener<T>, o ?: { path ?: string, defer ?: boolean }) {
-    const a: Event.Listen = { action: "listen", path: o?.path ?? "", type, listener }
+  listen  <E extends Plain>(tree: Event.Tree, when: string       , then: Id<Event.Listener<E>> | Event.Listener<E>       , o ?: Event.Options) {    
+    const a = { action: "listen", path: o?.path ?? "", when, then: wrap(then)! } satisfies Event.Action
     if (o?.defer ?? true) queue(tree, a)
     else                  flush(tree, a)
   },
 
-  deafen<T>(tree: Event.Tree, type ?: string, listener ?: Event.Listener<T>, o ?: { path ?: string, defer ?: boolean }) {
-    const a: Event.Deafen = { action: "deafen", path: o?.path ?? "", type, listener }
+  deafen  <E extends Plain>(tree: Event.Tree, when: string | null, then: Id<Event.Listener<E>> | Event.Listener<E> | null, o ?: Event.Options) {
+    const a = { action: "deafen", path: o?.path ?? "", when, then: wrap(then)  } satisfies Event.Action
     if (o?.defer ?? true) queue(tree, a)
     else                  flush(tree, a)
   },
 
-  dispatch(tree: Event.Tree, type: string, event: any, o ?: { path ?: string, defer ?: boolean }) {
-    const a: Event.Dispatch = { action: "dispatch", path: o?.path ?? "", type, event }
+  dispatch<E extends Plain>(tree: Event.Tree, when: string, what: E, o ?: Event.Options) {
+    const a = { action: "dispatch", path: o?.path ?? "", when, what } satisfies Event.Action
     if (o?.defer ?? true) queue(tree, a)
     else                  flush(tree, a)
   },
@@ -75,6 +91,14 @@ export const Event = {
     tree.pending.splice(0).forEach(
       a => flush(tree, a)
     )
+  }
+}
+
+function wrap<E extends Plain>(then: Id<Event.Listener<E>> | Event.Listener<E> | null) {
+  switch (typeof then) {
+    case "function" : return Id.acquire(then)
+    case "string"   : return then
+    case "object"   : return then
   }
 }
 
@@ -90,83 +114,90 @@ function flush(tree: Event.Tree, a: Event.Action) {
   }
 }
 
-function requestListeners(node: Event.Node | undefined, type: string) {
-  let list = node?.listeners.get(type)
-  // if (!list) node.listeners.set(
-  //   type, list = new Set()
-  // )
+function requestListeners(node: Event.Node | undefined, when: string) {
+  let list = node?.listeners[when]
+  if (!list) return
   return list
 }
 
-function requireListeners(node: Event.Node , type: string) {
-  let list = node.listeners.get(type)
-  if (!list) node.listeners.set(
-    type, list = new Set()
+function requireListeners(node: Event.Node            , when: string) {
+  let list = node.listeners[when]
+  if (!list) node.listeners[when] = (
+    list = [ ]
   )
   return list
 }
 
 function requestNode(root: Event.Node | undefined, path: string) {
-  for (const part of path.split("/")) {
-    let node = root?.children.get(part)
+  for (const id of path.split("/")) {
+    let node = root?.children[id]
     if (!node) return
     root = node
   }
-
   return root
 }
 
-function requireNode(root: Event.Node , path: string) {
-  for (const part of path.split("/")) {
-    let node = root.children.get(part)
-    if (!node) root.children.set(
-      part, node = Event.Node.new()
+function requireNode(root: Event.Node            , path: string) {
+  for (const id of path.split("/")) {
+    let node = root.children[id]
+    if (!node) root.children[id] = (
+      node = Event.Node.new()
     )
     root = node
   }
-
   return root
 }
 
-function onListen  (tree: Event.Tree, a: Event.Listen  ) {
+function onListen  (tree: Event.Tree, a: Event.Action & { action: "listen"  }) {
   const node = requireNode(tree.root, a.path)
-  const list = requireListeners(node, a.type)
-  list.add(a.listener)
+  const list = requireListeners(node, a.when)
+  if (list.includes(a.then))
+    throw new Error(`[Event.onListen] Listener with id '${a.then}' already exists.`)
+  list.push(a.then)
 }
 
-function onDeafen  (tree: Event.Tree, a: Event.Deafen  ) {
-         if (a.type !== undefined && a.listener !== undefined) {
+function onDeafen  (tree: Event.Tree, a: Event.Action & { action: "deafen"  }) {
+         if (a.when !== null && a.then !== null) {
     const node = requestNode(tree.root, a.path)
-    const list = requestListeners(node, a.type)
-    list?.delete(a.listener)
-  } else if (a.type !== undefined && a.listener === undefined) {
+    const list = requestListeners(node, a.when)
+    if (!list || !list.includes(a.then)) return
+
+    list.splice(list.indexOf(a.then), 1)
+
+  } else if (a.when !== null && a.then === null) {
     const node = requestNode(tree.root, a.path)
-    const list = requestListeners(node, a.type)
-    list?.clear()
-  } else if (a.type === undefined && a.listener !== undefined) {
+    const list = requestListeners(node, a.when)
+    if (!list) return
+
+    list.splice(0)
+
+  } else if (a.when === null && a.then !== null) {
     const node = requestNode(tree.root, a.path)
-    node?.listeners.forEach((list) => {
-      list.delete(a.listener!)
-    })
-  } else if (a.type === undefined && a.listener === undefined) {
+    if (!node) return
+
+    for (const list of Object.values(node.listeners))
+      if (list.includes(a.then))
+        list.splice(list.indexOf(a.then), 1)
+
+  } else if (a.when === null && a.then === null) {
     const node = requestNode(tree.root, a.path)
-    node?.children .clear()
-    node?.listeners.clear()
+    if (!node) return
+    node.children  = { }
+    node.listeners = { }
   }
 }
 
-function onDispatch(tree: Event.Tree, { path, type, event }: Event.Dispatch) {
+function onDispatch(tree: Event.Tree, { path, when, what }: Event.Action & { action: "dispatch" }) {
   const node = requestNode(tree.root, path)
   if (!node) return
-  reDispatch(tree, node, path, type, event)
+  reDispatch (tree, node, path, when, what)
 }
 
-function reDispatch(tree: Event.Tree, node: Event.Node, path: string, type: string, event: any) {
-  requestListeners(node, type)?.forEach(self => {
-    self(event, { tree, node, path, type, self })
+function reDispatch(tree: Event.Tree, node: Event.Node, path: string, when: string, what: any) {
+  requestListeners(node, when)?.forEach(self => {
+    Id.resolve(self)(what, { tree, node, path, when, self })
   })
 
-  node.children.forEach((child, name) => {
-    reDispatch(tree, child, `${path}/${name}`, type, event)
-  })
+  for (const [name, child] of Object.entries(node.children))
+    reDispatch(tree, child, `${path}/${name}`, when, what)
 }

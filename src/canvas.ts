@@ -1,3 +1,9 @@
+export namespace Canvas {
+  export type Element = HTMLCanvasElement        | OffscreenCanvas
+  export type Context = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+}
+
+
 export const Canvas = {
   Default() {
     const canvas = document.createElement("canvas");

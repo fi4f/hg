@@ -1,5 +1,6 @@
 import { Canvas } from "./canvas.js"
 import { Event } from "./event.js"
+import type { Id } from "./id.js"
 import { Input } from "./input.js"
 import { Scene } from "./scene.js"
 import { Vector2 } from "./vector2.js"
@@ -15,16 +16,16 @@ export type Stage = {
   readonly configureImageSmoothing   : ImageSmoothingQuality | undefined
 
   // canvas
-  logicalCanvasElement: HTMLCanvasElement
-  virtualCanvasElement: OffscreenCanvas
-  logicalCanvasContext: CanvasRenderingContext2D
-  virtualCanvasContext: OffscreenCanvasRenderingContext2D
+  logicalCanvasElement: Id<HTMLCanvasElement                >
+  virtualCanvasElement: Id<OffscreenCanvas                  >
+  logicalCanvasContext: Id<CanvasRenderingContext2D         >
+  virtualCanvasContext: Id<OffscreenCanvasRenderingContext2D>
   virtualScale: number
 
   // modules
   event: Event.Tree
-  debug: Map<string, string | undefined>
-  scene: Scene | undefined
+  debug: {[id: string]: string | null}
+  scene: Scene | null
   input: Input
 
   // metrics

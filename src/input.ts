@@ -179,4 +179,3 @@ export type Wheel = {
   wheel: Vector2
   native: WheelEvent
 }
-

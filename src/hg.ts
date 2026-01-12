@@ -8,15 +8,15 @@ export const VERSION = Version.new({
 })
 
 // forward core exports
+export * from "./data/plain.js"
 export * from "./stage.js"
 export * from "./scene.js"
 export * from "./event.js"
 export * from "./asset.js"
-export * from "./cache.js"
-export * from "./index.js"
 export * from "./input.js"
 export * from "./frames.js"
 export * from "./sprite.js"
+export * from "./id.js"
 
 // forward math exports
 export * from "./vector2.js"
