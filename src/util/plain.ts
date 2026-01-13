@@ -1,18 +1,7 @@
-export type Plain<T extends Plain.Any> = T
-
-export namespace Plain {
-  export type Any =
-    | Plain.Null
-    | Plain.String
-    | Plain.Number
-    | Plain.Boolean
-    | Plain.Any[]
-    | Plain.Object
-
-  export type Null    = null
-  export type String  = string
-  export type Number  = number
-  export type Boolean = boolean
-  export type Array   = Plain.Any[]
-  export type Object  = {[id: string]: Plain.Any}
-}
+export type Plain = 
+  | null
+  | string
+  | number
+  | boolean
+  | Plain[]
+  | {[key: string]: Plain}

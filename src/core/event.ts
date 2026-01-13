@@ -1,208 +1,127 @@
-import type { Plain } from "../hg.js"
+import type { Plain } from "../util/plain.js"
 import { Id, un } from "./id.js"
 
-export type Event = Plain<any>
+declare const __kind__: unique symbol
 
 export namespace Event {
+  export type Signal<E extends Plain> = string & { [__kind__] ?: E }
 
-  export type Handler<E extends Event> = {
-    (e: E, c: Context<E>): void
+  export type Handle<E extends Plain> = {
+    (what: E, kind: Signal<E>, self: Id<Handle<E>>): void
   }
 
-  export type Context<E extends Event> = {
-    tree: Tree
-    node: Node
-    kind: string
-    path: string
-    self: Id<Handler<E>>
+  export type Context<E extends Plain> = {
+    kind:    Signal<E>
+    self: Id<Handle<E>>
   }
 
-  export type Action = Plain<
-    | { action: "listen"  , path: string, kind: string       , handler: Id<Handler<any>>        }
-    | { action: "deafen"  , path: string, kind: string | null, handler: Id<Handler<any>> | null }
-    | { action: "dispatch", path: string, kind: string       , event: Event }
-  >
+  export type Action =
+    | { action: "attach"  , kind: string, then: Id<Handle<any>> }
+    | { action: "detach"  , kind: string, then: Id<Handle<any>> }
+    | { action: "dispatch", kind: string, what: any             }
 
-  export type Listen   = Extract<Action, { action: "listen"  }>
-  export type Deafen   = Extract<Action, { action: "deafen"  }>
-  export type Dispatch = Extract<Action, { action: "dispatch"}>
-
-  export type Tree = Plain<{
-    root   : Node
-    pending: Array<Action>
-  }>
-
-  export type Node = Plain<{
-    children: Id<Map<string, Node>>
-    handlers: Id<Map<string, Id<Set<Id<Handler<any>>>>>>
-  }>
-
-  export type Options = {
-    path  ?: string
-    defer ?: boolean
+  export type Bus = {
+    pending:                        Array<   Action      >
+    handles: { [kind: Signal<any>]: Array<Id<Handle<any>>>}
   }
 }
 
-const Node = {
-  new() {
-    return {
-      children: Id.acquire(new Map()),
-      handlers: Id.acquire(new Map()),
-    } satisfies Event.Node
-  }
+const GLOBAL = {
+  pending: [ ],
+  handles: { }
+} satisfies Event.Bus
+
+export function on  <E extends Plain>(kind: Event.Signal<E>, then: Id<Event.Handle<E>> | Event.Handle<E>, defer ?: boolean, use: Event.Bus = GLOBAL) {
+  if (typeof then !== "string")
+    then = Id.acquire(then)
+
+  const a = { action: "attach", kind, then } satisfies Event.Action
+  if (defer ?? true) queue(use, a)
+  else               flush(use, a)
+
+  return then
 }
 
-const Tree = {
-  new() {
-    return {
-      root   : Node.new(),
-      pending: [ ]
-    } satisfies Event.Tree
-  },
+export function off <E extends Plain>(kind: Event.Signal<E>, then: Id<Event.Handle<E>>                  , defer ?: boolean, use: Event.Bus = GLOBAL) {
+  const a = { action: "detach", kind, then } satisfies Event.Action
+  if (defer ?? true) queue(use, a)
+  else               flush(use, a)
 }
 
-export const Event = {
-  Tree, 
-  Node,
-
-  once<E extends Event>(listener: Event.Handler<E>) {
-    return ((e: E, c: Event.Context<E>) => {
-      listener(e, c)
-      Event.deafen<E>(
-        c.tree, 
-        c.kind, 
-        c.self, 
-        { path: c.path, defer: false }
-      )
-    }) satisfies Event.Handler<E>
-  },
-
-  listen<E extends Event>  (tree: Event.Tree, kind: string       , handler:    Event.Handler<E>        , o ?: Event.Options) {
-    const a: Event.Listen = { action: "listen"  , path: o?.path ?? "", kind, handler: Id.acquire(handler) }
-    if (o?.defer ?? true) queue(tree, a)
-    else                  flush(tree, a)
-  },
-
-  deafen<E extends Event>  (tree: Event.Tree, kind: string | null, handler: Id<Event.Handler<E>> | null, o ?: Event.Options) {
-    const a: Event.Deafen = { action: "deafen"  , path: o?.path ?? "", kind, handler }
-    if (o?.defer ?? true) queue(tree, a)
-    else                  flush(tree, a)
-  },
-
-  dispatch<E extends Event>(tree: Event.Tree, kind: string, event: E, o ?: Event.Options) {
-    const a: Event.Dispatch = { action: "dispatch", path: "", kind: "", event }
-    if (o?.defer ?? true) queue(tree, a)
-    else                  flush(tree, a)
-  },
-
-  poll(tree: Event.Tree) {
-    tree.pending.splice(0).forEach(
-      a => flush(tree, a)
-    )
-  }
+export function emit<E extends Plain>(kind: Event.Signal<E>, what: E, defer ?: boolean, use: Event.Bus = GLOBAL) {
+  const a = { action: "dispatch", kind, what } satisfies Event.Action
+  if (defer ?? true) queue(use, a)
+  else               flush(use, a)
 }
 
-function queue(tree: Event.Tree, a: Event.Action) {
-  tree.pending.push(a)
+export function poll(bus: Event.Bus = GLOBAL) {
+  bus.pending.splice(0).forEach(
+    a => flush(bus, a)
+  )
 }
 
-function flush(tree: Event.Tree, a: Event.Action) {
+function queue(bus: Event.Bus, a: Event.Action) {
+  bus.pending.push(a)
+}
+
+function flush(bus: Event.Bus, a: Event.Action) {
   switch (a.action) {
-    case "listen"  : onListen  (tree, a); break
-    case "deafen"  : onDeafen  (tree, a); break
-    case "dispatch": onDispatch(tree, a); break
+    case "attach"  : return onAttach  (bus, a);
+    case "detach"  : return onDetach  (bus, a);
+    case "dispatch": return onDispatch(bus, a);
   }
 }
 
-function requestListeners(node: Event.Node | undefined, kind: string) {
-  let list = node?.handlers[kind]
+function requestHandles(bus: Event.Bus, kind: string) {
+  let list = bus.handles[kind]
   if (!list) return
   return list
 }
 
-function requireListeners(node: Event.Node            , kind: string) {
-  let list = node.handlers[kind]
-  if (!list) node.handlers[kind] = (
+function requireHandles(bus: Event.Bus, kind: string) {
+  let list = bus.handles[kind]
+  if (!list) bus.handles[kind] = (
     list = [ ]
   )
   return list
 }
 
-function requestNode(root: Event.Node | undefined, path: string) {
-  for (const part of path.split("/")) {
-    let node = root?.children[part]
-    if (!node) return
-    root = node
-  }
-
-  return root
+function onAttach  (bus: Event.Bus, a: Event.Action & { action: "attach" }) {
+  const list = requireHandles(bus, a.kind)
+  if (!list.includes(a.then)) 
+    list.push(a.then)
 }
 
-function requireNode(root: Event.Node            , path: string) {
-  for (const part of path.split("/")) {
-    let node = root.children[part]
-    if (!node) root.children[part] = (
-      node = Node.new()
-    )
-    root = node
-  }
-  return root
+function onDetach  (bus: Event.Bus, a: Event.Action & { action: "detach" }) {
+  const list = requestHandles(bus, a.kind)
+  if (list && list.includes(a.then))
+    Id.release(list.splice(list.indexOf(a.then), 1)[0]!)
 }
 
-function releaseListener (listener :       Id<Event.Handler<any>> ) {
-  Id.release(listener)
+function onDispatch(bus: Event.Bus, a: Event.Action & { action: "dispatch" }) {
+  const list = requestHandles(bus, a.kind)
+  if (list) list.forEach(
+    self => un(self)(a.what, a.kind, self)
+  )
 }
 
-function releaseListeners(listeners: Array<Id<Event.Handler<any>>>) {
-  listeners.forEach(releaseListener)
-}
+export const Event = {
+  on, off, emit, poll,
 
-function releaseNode(node: Event.Node) {
-  Object.values(node.handlers).forEach(releaseListeners)
-  Object.values(node.children ).forEach(releaseNode     )
-}
+  Bus: {
+    new() {
+      return {
+        pending: [ ],
+        handles: { }
+      } satisfies Event.Bus
+    },
 
-function onListen(tree: Event.Tree, a: Event.Listen) {
-  const node = requireNode(tree.root, a.path)
-  const list = requireListeners(node, a.kind)
-  // only add if unique
-  if (!list.includes(a.handler))
-    list.push(a.handler)
-}
-
-function onDeafen(tree: Event.Tree, a: Event.Deafen) {
-  if (a.kind !== null && a.handler !== null) {
-    const node = requestNode(tree.root, a.path)
-    const list = requestListeners(node, a.kind)
-    if (list && list.includes(a.handler)) {
-      const where = list.indexOf(a.handler)
-      const what  = list.splice(where, 1)[0]
-      releaseListener(what!)
-    }
-    
-  } else if (a.kind !== null && a.handler === null) {
-    const node = requestNode(tree.root, a.path)
-    const list = requestListeners(node, a.kind)
-    if (list)  releaseListeners(list.splice(0))
-
-  } else if (a.kind === null && a.handler !== null) {
-    const node = requestNode(tree.root, a.path)
-    if (node) Object.values(node.handlers).forEach(list => {
-      if (list.includes(a.handler!)) {
-        const where = list.indexOf(a.handler!)
-        const what  = list.splice (where, 1)[0]
-        releaseListener(what!)
-      }
-    })
-  } else if (a.kind === null && a.handler === null) {
-    const node = requestNode(tree.root, a.path)
-    if (node) {
-      releaseNode(node)
-      node.children  = { }
-      node.handlers = { }
+    once<E extends Plain>(bus: Event.Bus, then: Id<Event.Handle<E>> | Event.Handle<E>) {
+      return ((what, kind, self) => {
+        un (then)(what, kind, self)
+        off(kind, self, false, bus)
+      }) satisfies Event.Handle<E>
     }
   }
 }
 
-function onDispatch(tree: Event.Tree, a: Event.Dispatch) {
-}

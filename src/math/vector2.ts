@@ -1,7 +1,6 @@
-import type { Plain } from "../hg.js"
 import { Vector } from "./vector.js"
 
-export type Vector2 = Plain<[number, number]>
+export type Vector2 = [number, number]
 
 export const Vector2 = {
   new(...a: Array<number>) {

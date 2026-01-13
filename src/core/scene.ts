@@ -1,7 +1,5 @@
 import type { Id } from "./id.js"
 
-
-
 export type  Scene = {
   doFrame ?: boolean
   onFrame ?: (frame: Scene.Frame) => void

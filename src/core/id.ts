@@ -1,4 +1,4 @@
-export declare const __kind__: unique symbol
+declare const __kind__: unique symbol
 
 export type Id<T> = string & { [__kind__] ?: T }
 

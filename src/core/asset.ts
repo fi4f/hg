@@ -1,4 +1,6 @@
-import { Id, type __kind__ } from "./id.js"
+import { Id } from "./id.js"
+
+declare const __kind__: unique symbol
 
 export type Asset =
   | { kind: "image", path: string, id: string | undefined }
@@ -8,47 +10,47 @@ export type Asset =
   | { kind: "json" , path: string, id: string | undefined }
 
 export const Asset = {
-  load(a: Asset, where ?: Id.Table) {
+  load(a: Asset, use ?: Id.Table) {
     switch (a.kind) {
-      case "image": return Asset.loadImage(a, where);
-      case "audio": return Asset.loadAudio(a, where);
-      case "text":  return Asset.loadText (a, where);
-      case "blob":  return Asset.loadBlob (a, where);
-      case "json":  return Asset.loadJson (a, where);
+      case "image": return Asset.loadImage(a, use);
+      case "audio": return Asset.loadAudio(a, use);
+      case "text":  return Asset.loadText (a, use);
+      case "blob":  return Asset.loadBlob (a, use);
+      case "json":  return Asset.loadJson (a, use);
     }
   },
 
-  loadImage(a: Asset & { kind: "image" }, where ?: Id.Table) {
+  loadImage(a: Asset & { kind: "image" }, use ?: Id.Table) {
     return new Promise<Id<HTMLImageElement>>((res, rej) => {
       const image = new Image();
-      image.onload  = () => res(Id.acquire(image, a.id, where));
+      image.onload  = () => res(Id.acquire(image, a.id, use));
       image.onerror = () => rej(                              );
       image.src     = a.path;
     })
   },
 
-  loadAudio(a: Asset & { kind: "audio" }, where ?: Id.Table) {
+  loadAudio(a: Asset & { kind: "audio" }, use ?: Id.Table) {
     return new Promise<Id<HTMLAudioElement>>((res, rej) => {
       const audio = new Audio();
-      audio.onload  = () => res(Id.acquire(audio, a.id, where));
+      audio.onload  = () => res(Id.acquire(audio, a.id, use));
       audio.onerror = () => rej(                              );
       audio.src     = a.path;
     })
   },
 
-  async loadText(a: Asset & { kind: "text" }, where ?: Id.Table) {
-    return fetch(a.path).then(res => res.text()).then(text => Id.acquire(text, a.id, where));
+  async loadText(a: Asset & { kind: "text" }, use ?: Id.Table) {
+    return fetch(a.path).then(res => res.text()).then(text => Id.acquire(text, a.id, use));
   },
 
-  async loadBlob(a: Asset & { kind: "blob" }, where ?: Id.Table) {
-    return fetch(a.path).then(res => res.blob()).then(blob => Id.acquire(blob, a.id, where));
+  async loadBlob(a: Asset & { kind: "blob" }, use ?: Id.Table) {
+    return fetch(a.path).then(res => res.blob()).then(blob => Id.acquire(blob, a.id, use));
   },
 
-  async loadJson(a: Asset & { kind: "json" }, where ?: Id.Table) {
-    return fetch(a.path).then(res => res.json()).then(json => Id.acquire(json, a.id, where));
+  async loadJson(a: Asset & { kind: "json" }, use ?: Id.Table) {
+    return fetch(a.path).then(res => res.json()).then(json => Id.acquire(json, a.id, use));
   },
 
-  loadAll(a: Array<Asset>, where ?: Id.Table) {
-    return Promise.all(a.map(a => Asset.load(a, where)));
+  loadAll(a: Array<Asset>, use ?: Id.Table) {
+    return Promise.all(a.map(a => Asset.load(a, use)));
   }
 }
