@@ -1,4 +1,4 @@
-import { Version } from "./util/version.js";
+import { Version } from "./version.js";
 
 export const VERSION = Version.new({
   moniker: "hg",
@@ -9,6 +9,6 @@ export const VERSION = Version.new({
 
 console.log(Version.toString(VERSION))
 
-export * from "./core/index.js"
-export * from "./math/index.js"
-export * from "./util/index.js"
+
+
+export * from "./version.js"

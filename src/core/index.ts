@@ -1,6 +1,0 @@
-export * from "./asset.js"
-export * from "./event.js"
-export * from "./id.js"
-export * from "./input.js"
-export * from "./scene.js"
-export * from "./stage.js"

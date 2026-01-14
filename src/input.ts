@@ -1,6 +1,6 @@
-import { Vector2 } from "../math/vector2.js"
-import { emit, on } from "./event.js"
-import { Id, un } from "./id.js"
+import { Vector2 } from "./vector2.js"
+import { Event } from "./event.js"
+import { Id } from "./id.js"
 
 export type Input = {
   keyboard: Input.Keyboard
@@ -92,66 +92,66 @@ export const Input = {
     // pointer events
     c.addEventListener("pointerup"   , native => {
       (native.target as HTMLElement).releasePointerCapture(native.pointerId)
-      emit("native:pointerup"    , Id.acquire(native))
+      Event.emit("native:pointerup"    , Id.acquire(native))
     })
     c.addEventListener("pointerdown" , native => {
       (native.target as HTMLElement).    setPointerCapture(native.pointerId)
-      emit("native:pointerdown"  , Id.acquire(native))
+      Event.emit("native:pointerdown"  , Id.acquire(native))
     })
     c.addEventListener("pointermove" , native => {
-      emit("native:pointermove"  , Id.acquire(native))
+      Event.emit("native:pointermove"  , Id.acquire(native))
     })
     c.addEventListener("pointercancel", native => {
       (native.target as HTMLElement).releasePointerCapture(native.pointerId)
-      emit("native:pointercancel", Id.acquire(native))
+      Event.emit("native:pointercancel", Id.acquire(native))
     })
 
-    on<Id<PointerEvent>>("native:pointerup"    , (native) => onNativePointerUp    (input, native))
-    on<Id<PointerEvent>>("native:pointerdown"  , (native) => onNativePointerDown  (input, native))
-    on<Id<PointerEvent>>("native:pointermove"  , (native) => onNativePointerMove  (input, native))
-    on<Id<PointerEvent>>("native:pointercancel", (native) => onNativePointerCancel(input, native))
+    Event.on<Id<PointerEvent>>("native:pointerup"    , (native) => onNativePointerUp    (input, native))
+    Event.on<Id<PointerEvent>>("native:pointerdown"  , (native) => onNativePointerDown  (input, native))
+    Event.on<Id<PointerEvent>>("native:pointermove"  , (native) => onNativePointerMove  (input, native))
+    Event.on<Id<PointerEvent>>("native:pointercancel", (native) => onNativePointerCancel(input, native))
 
-    on<Input.PointerUp    >("input:pointerup"    , (e) => onPointerUp    (input, e))
-    on<Input.PointerDown  >("input:pointerdown"  , (e) => onPointerDown  (input, e))
-    on<Input.PointerMove  >("input:pointermove"  , (e) => onPointerMove  (input, e))
-    on<Input.PointerCancel>("input:pointercancel", (e) => onPointerCancel(input, e))
+    Event.on<Input.PointerUp    >("input:pointerup"    , (e) => onPointerUp    (input, e))
+    Event.on<Input.PointerDown  >("input:pointerdown"  , (e) => onPointerDown  (input, e))
+    Event.on<Input.PointerMove  >("input:pointermove"  , (e) => onPointerMove  (input, e))
+    Event.on<Input.PointerCancel>("input:pointercancel", (e) => onPointerCancel(input, e))
 
     // keyboard events
     window.addEventListener("keyup"              , native => {
-      emit("native:keyup"              , Id.acquire(native))
+      Event.emit("native:keyup"              , Id.acquire(native))
     })
     window.addEventListener("keydown"            , native => {
-      emit("native:keydown"            , Id.acquire(native))
+      Event.emit("native:keydown"            , Id.acquire(native))
     })
 
-    on<Id<KeyboardEvent>>("native:keyup"              , (native) => onNativeKeyUp        (input, native))
-    on<Id<KeyboardEvent>>("native:keydown"            , (native) => onNativeKeyDown      (input, native))
+    Event.on<Id<KeyboardEvent>>("native:keyup"              , (native) => onNativeKeyUp        (input, native))
+    Event.on<Id<KeyboardEvent>>("native:keydown"            , (native) => onNativeKeyDown      (input, native))
 
-    on<Input.KeyUp    >("input:keyup"    , (e) => onKeyUp    (input, e))
-    on<Input.KeyDown  >("input:keydown"  , (e) => onKeyDown  (input, e))
+    Event.on<Input.KeyUp    >("input:keyup"    , (e) => onKeyUp    (input, e))
+    Event.on<Input.KeyDown  >("input:keydown"  , (e) => onKeyDown  (input, e))
     
     // gamepad events
     window.addEventListener("gamepadconnected"   , native => {
-      emit("native:gamepadconnected"   , Id.acquire(native))
+      Event.emit("native:gamepadconnected"   , Id.acquire(native))
     })
     window.addEventListener("gamepaddisconnected", native => {
-      emit("native:gamepaddisconnected", Id.acquire(native))
+      Event.emit("native:gamepaddisconnected", Id.acquire(native))
     })
 
-    on<Id<GamepadEvent>>("native:gamepadconnected"   , (native) => onNativeGamepadConnected   (input, native))
-    on<Id<GamepadEvent>>("native:gamepaddisconnected", (native) => onNativeGamepadDisconnected(input, native))
+    Event.on<Id<GamepadEvent>>("native:gamepadconnected"   , (native) => onNativeGamepadConnected   (input, native))
+    Event.on<Id<GamepadEvent>>("native:gamepaddisconnected", (native) => onNativeGamepadDisconnected(input, native))
 
-    on<Input.GamepadConnected   >("input:gamepadconnected"    , (e) => onGamepadConnected   (input, e))
-    on<Input.GamepadDisconnected>("input:gamepaddisconnected" , (e) => onGamepadDisconnected(input, e))
+    Event.on<Input.GamepadConnected   >("input:gamepadconnected"    , (e) => onGamepadConnected   (input, e))
+    Event.on<Input.GamepadDisconnected>("input:gamepaddisconnected" , (e) => onGamepadDisconnected(input, e))
 
     // wheel events
     c.addEventListener("wheel", native => {
-      emit("native:wheel", Id.acquire(native))
+      Event.emit("native:wheel", Id.acquire(native))
     })
 
-    on<Id<WheelEvent>>("native:wheel", native => onNativeWheel(input, native))
+    Event.on<Id<WheelEvent>>("native:wheel", native => onNativeWheel(input, native))
 
-    on<Input.Wheel>("input:wheel", (e) => onWheel(input, e))
+    Event.on<Input.Wheel>("input:wheel", (e) => onWheel(input, e))
   },
 
   getPointer(input: Input, id: number) {
@@ -176,11 +176,11 @@ function onNativeGamepadDisconnected(input: Input, native: Id<GamepadEvent>) {
 }
 
 function onNativeKeyUp        (input: Input, native: Id<KeyboardEvent>) {
-  emit<Input.KeyUp  >("input:keyup"  , { native, key: un(native).key }, false)
+  Event.emit<Input.KeyUp  >("input:keyup"  , { native, key: Id.resolve(native).key }, false)
 }
 
 function onNativeKeyDown      (input: Input, native: Id<KeyboardEvent>) {
-  emit<Input.KeyDown>("input:keydown", { native, key: un(native).key }, false)
+  Event.emit<Input.KeyDown>("input:keydown", { native, key: Id.resolve(native).key }, false)
 }
 
 function onNativePointerUp    (input: Input, native: Id<PointerEvent> ) {
@@ -205,34 +205,42 @@ function onNativeWheel        (input: Input, native: Id<WheelEvent>   ) {
 
 function onGamepadConnected   (input: Input, e: Input.GamepadConnected   ) {
   Id.release(e.native)
+  // release native event reference, transform input for engine/scene
 }
 
 function onGamepadDisconnected(input: Input, e: Input.GamepadDisconnected) {
   Id.release(e.native)
+  // release native event reference, transform input for engine/scene
 }
 
 function onKeyUp              (input: Input, e: Input.KeyUp              ) {
   Id.release(e.native)
+  // release native event reference, transform input for engine/scene
 }
 
 function onKeyDown            (input: Input, e: Input.KeyDown            ) {
   Id.release(e.native)
+  // release native event reference, transform input for engine/scene
 }
 
 function onPointerUp          (input: Input, e: Input.PointerUp          ) {
   Id.release(e.native)
+  // release native event reference, transform input for engine/scene
 }
 
 function onPointerDown        (input: Input, e: Input.PointerDown        ) {
   Id.release(e.native)
+  // release native event reference, transform input for engine/scene
 }
 
 function onPointerMove        (input: Input, e: Input.PointerMove        ) {
   Id.release(e.native)
+  // release native event reference, transform input for engine/scene
 }
 
 function onPointerCancel      (input: Input, e: Input.PointerCancel      ) {
   Id.release(e.native)
+  // release native event reference, transform input for engine/scene
 }
 
 function onWheel              (input: Input, e: Input.Wheel              ) {
