@@ -1,180 +1,119 @@
+import { Canvas } from "./canvas.js"
 import { Id } from "./id.js"
-import { Event } from "./event.js"
-import type { Vector2 } from "./vector2.js"
-
-export type Stage = {
-  configureInnerWidth    : "auto" | number,
-  configureInnerHeight   : "auto" | number,
-  configureScaleIncrement: "auto" | number,
-  configureImageSmoothing: false  | ImageSmoothingQuality,
-
-
-  outerCanvas : Id<HTMLCanvasElement>
-  innerCanvas : Id<OffscreenCanvas  >
-  outerContext: Id<         CanvasRenderingContext2D>
-  innerContext: Id<OffscreenCanvasRenderingContext2D>
-  innerScale  : number
-}
 
 export namespace Stage {
-  
-}
+  export type Instance = {
+    readonly configureLogicalBackground: string
+    readonly configureVirtualBackground: string
+    readonly configureInnerWidth       : "auto" | number
+    readonly configureInnerHeight      : "auto" | number
+    readonly configureScaleIncrement   : "auto" | number
+    readonly configureImageSmoothing   :  false | ImageSmoothingQuality
 
-export const Stage = {
-
-  new() {
-
-  },
-
-
-  use(stage: Stage) {
-
-  },
-
-  getOuterSize (stage: Stage) {
-    return [
-      Id.resolve(stage.outerCanvas).width,
-      Id.resolve(stage.outerCanvas).height
-    ] satisfies Vector2
-  },
-
-  getInnerSize (stage: Stage) {
-    return [
-      Id.resolve(stage.innerCanvas).width,
-      Id.resolve(stage.innerCanvas).height
-    ] satisfies Vector2
-  },
-
-  getInnerScale(stage: Stage) {
-    return stage.innerScale
-  },
-
-  toInner(stage: Stage, [x, y]: Vector2) {
-    const [ow, oh] = Stage.getOuterSize (stage)
-    const [iw, ih] = Stage.getInnerSize (stage)
-    const scale    = Stage.getInnerScale(stage)
-
-    return [
-      (x - ow / 2) / scale + iw / 2,
-      (y - oh / 2) / scale + ih / 2,
-    ] satisfies Vector2
-  },
-
-  toOuter(stage: Stage, [x, y]: Vector2) {
-    const [ow, oh] = Stage.getOuterSize (stage)
-    const [iw, ih] = Stage.getInnerSize (stage)
-    const scale    = Stage.getInnerScale(stage)
-
-    return [
-      (x - iw / 2) * scale + ow / 2,
-      (y - ih / 2) * scale + oh / 2,
-    ] satisfies Vector2
-  },
-}
-
-function resize(stage: Stage) {
-  const outerCanvas = Id.resolve(stage.outerCanvas)
-  const innerCanvas = Id.resolve(stage.innerCanvas)
-  Event.emit<Vector2>("stage:resize", [
-    outerCanvas.getBoundingClientRect().width,
-    outerCanvas.getBoundingClientRect().height
-  ])
-}
-
-function computeInnerWidth(
-  outerCanvas: HTMLCanvasElement,
-  innerWidth : "auto" | number
-) {
-  if (innerWidth === "auto") return outerCanvas.width
-  else                       return        innerWidth
-}
-
-function computeInnerHeight(
-  outerCanvas: HTMLCanvasElement,
-  innerHeight: "auto" | number
-) {
-  if (innerHeight === "auto") return outerCanvas.height
-  else                        return        innerHeight
-}
-
-function computeInnerScale(
-  outerCanvas: HTMLCanvasElement, 
-  innerCanvas: OffscreenCanvas  ,
-  scaleIncrement: "auto" | number
-) {
-  let scale = Math.min(
-    outerCanvas.width  / innerCanvas.width ,
-    outerCanvas.height / innerCanvas.height
-  )
-
-  if (scaleIncrement !== "auto")
-    scale = Math.floor(scale / scaleIncrement) * scaleIncrement
-
-  return scale
-}
-
-function configureSmoothing(
-  outerContext:          CanvasRenderingContext2D,
-  innerContext: OffscreenCanvasRenderingContext2D,
-  imageSmoothing: false | ImageSmoothingQuality
-){
-  outerContext.imageSmoothingEnabled = !!imageSmoothing
-  innerContext.imageSmoothingEnabled = !!imageSmoothing
-  if (imageSmoothing) {
-    outerContext.imageSmoothingQuality = imageSmoothing
-    innerContext.imageSmoothingQuality = imageSmoothing
+    logicalCanvasElement: Id<HTMLCanvasElement>
+    virtualCanvasElement: Id<OffscreenCanvas  >
+    logicalCanvasContext: Id<         CanvasRenderingContext2D>
+    virtualCanvasContext: Id<OffscreenCanvasRenderingContext2D>
+    virtualScale: number
   }
 }
 
-function resizeOuterCanvas(stage: Stage, [w, h]: Vector2) {
-  const outerCanvas = Id.resolve(stage.outerCanvas)
-  outerCanvas.width  = w
-  outerCanvas.height = h
+let __default__: Stage.Instance;
+let CONFIGURE_LOGICAL_BACKGROUND:          string                = "black";
+let CONFIGURE_VIRTUAL_BACKGROUND:          string                = "white";
+let CONFIGURE_INNER_WIDTH       : "auto" | number                =  "auto";
+let CONFIGURE_INNER_HEIGHT      : "auto" | number                =  "auto";
+let CONFIGURE_SCALE_INCREMENT   : "auto" | number                =  "auto";
+let CONFIGURE_IMAGE_SMOOTHING   :  false | ImageSmoothingQuality =   false;
+
+export const Stage = {
+  Instance: {
+    new(o ?: {
+      c   ?: HTMLCanvasElement;
+      w   ?: "auto" | number;
+      h   ?: "auto" | number;
+      lbg ?: string;
+      vbg ?: string;
+      si  ?: "auto" | number;
+      is  ?:  false | ImageSmoothingQuality;
+    }) {
+      const configureLogicalBackground = o?.lbg ?? "black";
+      const configureVirtualBackground = o?.vbg ?? "white";
+      const configureInnerWidth        = o?.w   ?? "auto" ;
+      const configureInnerHeight       = o?.h   ?? "auto" ;
+      const configureScaleIncrement    = o?.si  ?? "auto" ;
+      const configureImageSmoothing    = o?.is  ?? false;
+
+      const logicalCanvasElement = o?.c ?? Canvas.__default__;
+      const virtualCanvasElement = new OffscreenCanvas(
+        configureInnerWidth  === "auto" ? logicalCanvasElement.width  : configureInnerWidth ,
+        configureInnerHeight === "auto" ? logicalCanvasElement.height : configureInnerHeight
+      );
+
+      const logicalCanvasContext = logicalCanvasElement.getContext("2d");
+      if (!logicalCanvasContext)
+        throw new Error("[Stage.new] Failed to obtain a logical canvas context.");
+
+      const virtualCanvasContext = virtualCanvasElement.getContext("2d");
+      if (!virtualCanvasContext)
+        throw new Error("[Stage.new] Failed to obtain a virtual canvas context.");
+
+      return {
+        configureLogicalBackground,
+        configureVirtualBackground,
+        configureInnerWidth       ,
+        configureInnerHeight      ,
+        configureScaleIncrement   ,
+        configureImageSmoothing   ,
+
+        logicalCanvasElement: Id.acquire(logicalCanvasElement),
+        virtualCanvasElement: Id.acquire(virtualCanvasElement),
+        logicalCanvasContext: Id.acquire(logicalCanvasContext),
+        virtualCanvasContext: Id.acquire(virtualCanvasContext),
+        virtualScale: 1,
+      } satisfies Stage.Instance
+    }
+  },
+
+  get __default__() { 
+    return __default__ ??= Stage.Instance.new({
+      lbg: CONFIGURE_LOGICAL_BACKGROUND,
+      vbg: CONFIGURE_VIRTUAL_BACKGROUND,
+      w  : CONFIGURE_INNER_WIDTH       ,
+      h  : CONFIGURE_INNER_HEIGHT      ,
+      si : CONFIGURE_SCALE_INCREMENT   ,
+      is : CONFIGURE_IMAGE_SMOOTHING   ,
+    }) 
+  },
+
+  set CONFIGURE_LOGICAL_BACKGROUND(lbg: string) { 
+    if (__default__) throw new Error("[Stage.CONFIGURE_LOGICAL_BACKGROUND] Default Stage has already been configured.")
+    CONFIGURE_LOGICAL_BACKGROUND = lbg;
+  },
+
+  set CONFIGURE_VIRTUAL_BACKGROUND(vbg: string) { 
+    if (__default__) throw new Error("[Stage.CONFIGURE_VIRTUAL_BACKGROUND] Default Stage has already been configured.")
+    CONFIGURE_VIRTUAL_BACKGROUND = vbg;
+  },
+
+  set CONFIGURE_INNER_WIDTH(w: "auto" | number) { 
+    if (__default__) throw new Error("[Stage.CONFIGURE_INNER_WIDTH ] Default Stage has already been configured.")
+    CONFIGURE_INNER_WIDTH  = w;
+  },
+
+  set CONFIGURE_INNER_HEIGHT(h: "auto" | number) {
+    if (__default__) throw new Error("[Stage.CONFIGURE_INNER_HEIGHT] Default Stage has already been configured.")
+    CONFIGURE_INNER_HEIGHT = h;
+  },
+
+  set CONFIGURE_SCALE_INCREMENT(si: "auto" | number) {
+    if (__default__) throw new Error("[Stage.CONFIGURE_SCALE_INCREMENT] Default Stage has already been configured.")
+    CONFIGURE_SCALE_INCREMENT = si;
+  },
+
+  set CONFIGURE_IMAGE_SMOOTHING(is: false | ImageSmoothingQuality) {
+    if (__default__) throw new Error("[Stage.CONFIGURE_IMAGE_SMOOTHING] Default Stage has already been configured.")
+    CONFIGURE_IMAGE_SMOOTHING = is;
+  },
 }
 
-function resizeInnerCanvas(stage: Stage, [w, h]: Vector2) {
-  stage.innerCanvas = Id.acquire(new OffscreenCanvas(w, h))
-}
-
-function setImageSmoothing(context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, imageSmoothing: false | ImageSmoothingQuality) {
-  context.imageSmoothingEnabled = !!imageSmoothing
-  if (imageSmoothing) 
-    context.imageSmoothingQuality = imageSmoothing
-}
-
-function onResize(stage: Stage, [w, h]: Vector2) {
-  const outerCanvas = Id.resolve(stage.outerCanvas)
-  outerCanvas.width  = w
-  outerCanvas.height = h
-
-  const innerCanvas = new OffscreenCanvas(
-    computeInnerWidth (outerCanvas, stage.configureScaleIncrement),
-    computeInnerHeight(outerCanvas, stage.configureScaleIncrement)
-  )
-
-  const outerContext = outerCanvas.getContext("2d")!
-  const innerContext = innerCanvas.getContext("2d")!
-  configureSmoothing(outerContext, innerContext, stage.configureImageSmoothing)
-  
-  const innerScale = computeInnerScale(
-    outerCanvas,
-    innerCanvas,
-    stage.configureScaleIncrement
-  )
-
-  stage.innerCanvas  = Id.acquire(innerCanvas)
-  stage.outerContext = Id.acquire(outerContext)
-  stage.innerContext = Id.acquire(innerContext)
-  stage.innerScale   = innerScale
-}
-  
-
-
-}
-
-function animate(stage: Stage, t0: number, t1: number, t2: number) {
-  const  t = (t2 - t0) / 1000
-  const dt = (t2 - t1) / 1000
-
-  requestAnimationFrame(t3 => animate(stage, t0, t2, t3))
-}
