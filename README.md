@@ -1,6 +1,6 @@
 # Mercury
 
-> A tiny 2D engine for making interactive stuff on the web
+> A tiny engine for making interactive stuff on the web
 
 ---
 
@@ -40,18 +40,3 @@ npm i @fi4f/hg
 ```
 
 Import the bits you need and start making things -
-
-```ts
-import { Stage, Scene, Event, ... } from "@fi4f/hg";
-
-const stage = Stage.new();
-
-Stage.change(stage, {
-  onRender(context) {
-    // draw stuff
-    // move stuff
-    // react to input
-    ...
-  }
-});
-```
