@@ -121,7 +121,8 @@ The tokenizer recognizes unsuffixed numeric literals as `num`, with `i`,
 `u`, and `f` suffixes denoting `i32`, `u32`, and `f32`. `true` and `false` are
 hg-lisp symbols rather than reserved boolean literals. Double quotes are
 the only string delimiter, and strings use standard JavaScript escapes.
-Templates use a prefix outside the quotes, as in `$"Hello {name}"`.
+Templates use a prefix outside the quotes, as in `$"Hello {name}"`; doubled
+braces represent literal braces in template text.
 Highlighting and diagnostics must reflect these rules. See
 [numeric literals](hg-lisp.md#numeric-literals) and
 [string templates](hg-lisp.md#string-templates).
@@ -142,6 +143,13 @@ remain open.
 A mixed host and shader program may produce multiple output artifacts;
 their packaging still needs to be specified. Output ranges belong to those
 artifacts, while editor token ranges belong to the analyzed source buffer.
+
+hg-lisp string templates compile to native JavaScript template literals.
+The emitted backticks and `${...}` belong to the target grammar; hg-lisp
+source keeps its `$"...{expression}..."` notation. When that expression runs,
+it immediately evaluates its interpolations and produces an ordinary string
+with native JavaScript template semantics. It creates no deferred computation.
+Templates are JavaScript-only and must be diagnosed in WGSL-targeted code.
 
 The compiler must preserve hg-lisp's mutable binding semantics: `let`
 introduces a scoped mutable declaration, `set` assigns to a target, and
@@ -759,6 +767,13 @@ or JavaScript; their JavaScript names and signatures remain open.
 | Type guard | Validates a value without conversion when it passes a guarded boundary. A failed runtime guard is a hard error; in WGSL the guard becomes a static type declaration. |
 | Type constructor | Primitive constructors convert permissively and fail when conversion is impossible. Composite constructor inputs and signatures remain open. |
 
+Primitive numeric and string conversion prefers JavaScript `Number` and
+`String` semantics where applicable. `Number` conversion results such as
+`NaN` and `Infinity` are preserved as JavaScript numbers rather than treated
+as conversion failures. Native conversion exceptions remain errors.
+Converting a number to `dict` or `list` is an error; it does not create a
+collection containing that number.
+
 For example, `(i32? 10)` returns true because the value is suitable for
 `i32`, even though its unsuffixed source literal is `num`. An `i32` parameter
 guard checks the incoming primitive JavaScript number before the function
@@ -772,8 +787,15 @@ mutation. If a mutation makes a value unsuitable, the next guard that
 receives it raises the error. Mutated data that encounters no further guard
 is not automatically checked.
 
-Numeric edge cases and range checks, composite shapes, alias behavior, exact
-guarded API boundaries, and error representation still need contracts.
+Target guard and GPU conversion rules for non-finite numbers, numeric range
+checks, alias behavior, exact guarded API boundaries, and error representation
+still need contracts. Serializing `NaN` and `Infinity` also needs a separate
+JSON policy; their acceptance in JavaScript does not choose a JSON encoding.
+
+Composite shapes concern the exact object fields representing vector
+components, matrix elements and their order, struct fields, and
+WGSL-compatible `array` element types, lengths, and data. Constructor inputs,
+these representation layouts, and their boundary packing remain open.
 For object-represented types, a discriminator alone does not define every
 field or component check.
 
@@ -802,7 +824,7 @@ a callable reference:
 | --- | --- |
 | Runtime access | Import packaging for the `hg` object and access from compiled hg-lisp. |
 | API conventions | Domain namespaces, plain data shapes, explicit operations, and documented accessor exceptions. |
-| Compiler API | Final tokenize/parse/compile signatures, token and syntax schemas, source revisions, error recovery, fragment-target diagnostics, WGSL capture lowering and hoisting, value-omitting explicit return, target result constraints, compilation results, and source mappings. |
+| Compiler API | Final tokenize/parse/compile signatures, token and syntax schemas, source revisions, error recovery, template nesting and malformed interpolation diagnostics, fragment-target diagnostics, WGSL capture lowering and hoisting, value-omitting explicit return, target result constraints, compilation results, and source mappings. |
 | Application configuration | Default `ups`, validation after `nil` normalization, canvas bitmap sizing, and resize behavior. |
 | Frame presentation | Confirmation of the unconstrained fit rule, other scale increments, pixel alignment, letterbox appearance, and filtering. |
 | Scene serving and execution | Contracts for serving fresh scenes and live updating, the proposed `patch` name, script format, compilation, execution timing, and failure reporting. |
@@ -812,10 +834,10 @@ a callable reference:
 | Asynchronous execution | Promise-value representation, API completion contracts, nested promise-completion and rejection scope, value-omitting explicit return, promise adoption, finally semantics, native exceptions and rejection reasons, continuation context, and pending-task lifetimes across scene resets. |
 | Self-hosted editing | Obtaining the current app, source access, code-update boundaries, and inspector refresh behavior. |
 | Data shared between scenes | Acceptance of the app-store proposal, value ownership, get/set semantics, and persistence of serializable data. |
-| Value interoperability | `__type__` tag values and payload fields, scalar type metadata for inspection, constructor conversion details, and native value normalization. |
+| Value interoperability | `__type__` tag values, exact composite object fields and layout, scalar type metadata for inspection, composite constructor inputs, and native value normalization. |
 | Collection access | Index validation and coercion, missing keys, insertion and out-of-range writes, reserved-marker validation, and access and write rules for WGSL arrays, structs, and swizzles. |
-| JSON encoding | Dictionary collision escape, exact tag values and payload fields, scalar numeric edge cases, serializer API, and policies for graphs containing cycles, shared references, nonserializable handles, functions, or GPU resources. |
-| Type validation | JavaScript query and guard entry points, numeric edge cases and ranges, composite shapes, alias behavior, exact guarded API boundaries, and error representation. |
+| JSON encoding | Dictionary collision escape, exact tag values and payload fields, non-finite numeric encoding, serializer API, and policies for graphs containing cycles, shared references, nonserializable handles, functions, or GPU resources. |
+| Type validation | JavaScript query and guard entry points, target constraints for non-finite numbers and numeric ranges, exact composite field shapes, alias behavior, guarded API boundaries, and error representation. |
 | Shared math | Public operation names, hg-lisp notation, scalar/vector/matrix overloads, result types, swizzle reads and writes, mutation, promotion, precision, and target feature requirements. |
 | Mutation | Adoption of the reserved `__type__` mutation rule, compile-time rejection for known keys, runtime checks for computed keys, the direct JavaScript write boundary, and visibility of updates to shader work. |
 | GPU data and resources | Memory layout, resource binding, transfers, and the relationship between runtime objects and GPU resources. |

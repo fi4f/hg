@@ -111,7 +111,7 @@ Templates use the same string escapes as ordinary strings. Interpolation braces 
 
 ## Evaluation
 
-hg-lisp follows JavaScript's lexical scope, binding lookup, closure capture, and evaluation order. Its implicit function returns and `nil` default are defined below.
+hg-lisp follows JavaScript's lexical scope, binding lookup, closure capture, and evaluation order while retaining its own syntax and symbol spellings. Its implicit function returns and `nil` default are defined below.
 
 ### Lexical bindings
 
@@ -726,7 +726,7 @@ The next revision needs to settle these contracts:
 - **Evaluation details:** individual form results and bare `return` defaults; shader-side capture and no-value function lowering remain compiler contracts.
 - **Collection access:** index validation, missing entries and insertion, coercion, and enforcement of the proposed reserved-field rule for computed and external writes.
 - **Async execution:** constructor layout, completion scope in nested functions, argument defaults, promise adoption, `finally` behavior, await contexts, native interoperability, and pending-work lifetimes.
-- **Compilers:** public operation names, source units, token and diagnostic records, ranges, function hoisting and capture rules, target outputs, and source mappings.
+- **Compilers:** public operation names, source units, token and diagnostic records, ranges, function hoisting and WGSL capture lowering, target outputs, and source mappings.
 - **Reflection:** app references, inspectable bindings, source identities, live writes, and external call scope.
 - **Structured data:** named types, array element types and lengths, matrix construction, and GPU packing.
 - **Serialization:** discriminator values and payloads, dictionary collision rules, supported data graphs, and nonserializable contents.
