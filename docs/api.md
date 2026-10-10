@@ -322,6 +322,80 @@ also needs a resize policy, including when omitted buffer dimensions follow
 canvas changes. These policies must preserve the centered, uniform-scale
 presentation contract.
 
+### Implemented app foundation
+
+`src/hg/index.ts` exports the plain `hg` namespace. The current app foundation
+implements configuration, a 2D output buffer, canvas presentation, and an
+update loop. GPU rendering, compiler integration, `serve`, `patch`, and
+reflection are still pending. The 2D buffer is an initial host rendering
+path; it does not define the future shader-output contract.
+
+```javascript
+import { hg } from "./src/hg";
+
+const app = hg.App.new({ c: "preview", w: 512, h: 512, si: 1 });
+
+hg.Events.on(app.events, "update", ({ app, dt }) => {
+  // dt is in seconds. Draw into the output buffer, not the destination.
+  app.graphics.fillStyle = "#161b22";
+  app.graphics.fillRect(0, 0, app.buffer.width, app.buffer.height);
+});
+
+hg.App.start(app);
+```
+
+The instance is a plain record. `app.c` and `app.context` expose the
+destination canvas and its 2D context; `app.buffer` and `app.graphics` expose
+the output canvas and its 2D context. Creating an app does not start its loop.
+A destination that cannot provide a 2D context raises an error.
+
+| Operation | Implemented behavior |
+| --- | --- |
+| `App.configure(app, options)` | Validate and copy supplied options, then queue them for the next update. Omitted fields retain their current configuration; explicit `null` or `undefined` restore their unset defaults. |
+| `App.update(app, dt = 0)` | Apply queued configuration in order, synchronize canvas and buffer sizes, and emit `"update"` with `{ app, dt }`. A handler's configuration changes wait until the next update. Recursive updates are errors. |
+| `App.frame(app)` | Return the presentation rectangle `{ x, y, w, h, scale }` in destination bitmap pixels. |
+| `App.present(app)` | Clear the destination and draw the output buffer using that rectangle. Return the rectangle. |
+| `App.start(app)` | Start or resume fixed-step updates through `requestAnimationFrame`, presenting after the updates in each browser frame. Repeated starts do not create extra loops. |
+| `App.pause(app)` | Cancel scheduled animation and discard accumulated time. Manual updates and presentation remain available. |
+| `App.dispose(app)` | Pause, clear subscriptions and queued configuration, release the buffer bitmap, and remove an app-created destination. Repeated disposal is harmless; other app operations except pause reject a disposed instance. |
+
+The initial implementation chooses these provisional policies for the open
+configuration and lifecycle decisions:
+
+- `ups` defaults to 60. The loop runs at most five updates per browser frame
+  and drops excess elapsed time. The first browser frame runs one update.
+  Callback failures stop the loop and propagate to the caller or browser.
+- `w` and `h` must be positive integer pixel dimensions that fit an unsigned
+  32-bit value; the browser may impose smaller bitmap limits. `si` and `ups`
+  must be positive finite numbers, and the update interval must be finite.
+- An app-created canvas fills the viewport. Its bitmap follows viewport
+  dimensions multiplied by device pixel ratio at each update. Caller-owned
+  canvas bitmaps are left to the caller. Unset buffer dimensions follow the
+  destination bitmap at each update; changing dimensions clears the buffer
+  according to native canvas behavior.
+- For any positive `si`, use the largest multiple of `si` that fits, with
+  `si` as the minimum scale. This includes the documented `si: 1` behavior.
+  Coordinates retain fractional pixels. Increment-constrained presentation
+  disables image smoothing; unconstrained presentation enables it.
+- Letterboxing is transparent. Presentation saves and restores destination
+  context state, resets its transform, and neutralizes alpha, compositing,
+  filters, and shadows while drawing. An existing destination clipping region
+  still applies under the native canvas rules.
+
+Configuration validation errors enqueue nothing. If an accepted destination
+later fails to provide a context, that configuration leaves the current
+destination and options intact, raises an error, and discards the remaining
+configuration requests in that update. Earlier successful requests remain
+applied.
+
+`hg.Events.new()` creates an independent dispatcher. `on(events, name,
+handler)` registers a callback once and returns it; `off(events, name,
+handler)` removes it. `emit(events, name, value)` synchronously dispatches
+the value. Each emission snapshots its handlers in registration order.
+Subscription changes affect later emissions, and nested emissions queue
+behind the current one. A callback error propagates, discards pending
+emissions, and leaves the dispatcher ready for a later call.
+
 ### Serving scenes and live updates
 
 A live environment needs two separate operations: one that replaces scene
@@ -637,6 +711,74 @@ A plain JavaScript object representation is also distinct from a GPU memory
 layout. Marking a type as WGSL-compatible does not specify its packing,
 alignment, resource bindings, or transfer behavior.
 
+### Implemented JavaScript data bindings
+
+The current `src/hg/data` modules implement the bindings below. This section
+describes their JavaScript behavior; compiler integration and shader-boundary
+contracts remain part of the intended design elsewhere in this document.
+
+Each type exposes a variadic `new(...a)` constructor and a Lisp-facing
+`maybe(a, ...b)` query. A query requires exactly one argument, returns false
+for a type mismatch, and raises `TypeError` for invalid arity. Its named first
+parameter preserves TypeScript type narrowing. The corresponding hg-lisp
+forms are `(vec3f 1 2 3)` and `(vec3f? value)`, for example.
+The public `assert(a)` helper has a fixed single-value signature: it validates
+without conversion, returns the validated value, and raises `TypeError` for
+a mismatch.
+
+| Constructor | Current behavior |
+| --- | --- |
+| `num`, `str`, `bool`, `i32`, `u32`, `f32` | Zero arguments or a single `undefined` produce `0`, `""`, or `false` as appropriate; one other argument converts it; additional arguments raise `TypeError`. |
+| `nil` | Returns `null` regardless of its arguments. |
+| `list` | Collects all arguments as entries. An array argument remains a nested array rather than being flattened. |
+| `dict` | Converts alternating keys and values into entries. Keys use `str.new`; an unmatched final key receives `null`. A single dictionary is returned unchanged; a single list supplies alternating keys and values. Zero arguments, or a single `null` or `undefined`, produce an empty dictionary. The `"__type__"` key is reserved and rejected. |
+
+`num.new` rejects `NaN`, `+Infinity`, and `-Infinity` after coercion;
+`num.query` accepts only finite JavaScript numbers. All typed numeric
+constructors share this finite-input requirement. Integer constructors
+truncate toward zero and clamp finite values to their scalar ranges.
+`f32.new` clamps finite values to its range while retaining ordinary host
+numbers; it does not apply `Math.fround`.
+
+String-to-number conversion trims whitespace and uses JavaScript `Number`
+to parse the body. A trailing `:i`, `:u`, or `:f` selects `i32.new`, `u32.new`,
+or `f32.new`; without a suffix, the result is `num`. Decimal and exponent
+notation, hexadecimal, octal, and binary strings all support these suffixes,
+for example `"1.5:f"`, `"1e3:i"`, `"0xff:u"`, `"0o77:i"`, and `"0b10:f"`.
+Empty bodies and `NaN` parse results raise `SyntaxError`; parsed infinities
+fail the constructor's finite-input check. This conversion
+string syntax is separate from the intended compiler source literal grammar.
+`bool.new` uses JavaScript boolean conversion.
+
+All nine vector types are implemented: `vec2f`, `vec3f`, `vec4f`, and their
+`i` and `u` variants. Values are plain objects with a `__type__` tag such as
+`"__vec3f__"` and numeric `x`, `y`, `z`, and `w` components as needed. Queries
+validate the tag and every component against the corresponding scalar type.
+Constructors convert components through that scalar type's constructor:
+
+- Zero arguments, or a single `null` or `undefined`, produce zero components.
+- A single number fills every component with that value.
+- A single list supplies the first required components, all of which must be
+  numbers; extra entries are ignored and missing components are errors.
+- A single vector is copied, trimming larger dimensions or filling smaller
+  dimensions with zeros. Its declared dimension determines its components.
+- Multiple arguments flatten numbers, lists of numbers, and vectors in order.
+  They must supply exactly the target component count; nested lists and
+  unsupported values are errors.
+
+```js
+list.new(1, [2, 3]);                    // [1, [2, 3]]
+dict.new("x", 1, "y");                 // entries x: 1, y: null
+vec3f.new(1, 2, 3);                    // (vec3f 1 2 3)
+vec4u.new(vec2f.new(1.9, -2), 3, 4);    // components 1, 0, 3, 4
+```
+
+Internal helpers use fixed parameters and double-underscore names, including
+`__get__`, `__put__`, `__del__`, `__len__`, and `__coerce__`.
+The same convention applies to `__str__` and `__bool__`. These names mark
+private implementation functions by convention; JavaScript does not enforce
+access restrictions on them.
+
 ### Collection member access
 
 hg-lisp reads collections with dot notation. Lists use zero-based indices:
@@ -759,20 +901,25 @@ and the WGSL feature profile still need contracts.
 
 Each runtime type has a corresponding query, guard, and constructor. These
 operations should carry the same type meaning whether a caller uses hg-lisp
-or JavaScript; their JavaScript names and signatures remain open.
+or JavaScript. Names and signatures for the current data modules are defined
+in [implemented JavaScript data bindings](#implemented-javascript-data-bindings);
+those for other runtime types remain open.
 
 | Operation | Intended purpose |
 | --- | --- |
 | Type query | An ordinary boolean function named `<type>?` in hg-lisp. Tests value suitability or shape; an ordinary mismatch returns false rather than asserting or throwing. |
 | Type guard | Validates a value without conversion when it passes a guarded boundary. A failed runtime guard is a hard error; in WGSL the guard becomes a static type declaration. |
-| Type constructor | Primitive constructors convert permissively and fail when conversion is impossible. Composite constructor inputs and signatures remain open. |
+| Type constructor | Primitive constructors convert permissively and fail when conversion is impossible. The current collection and vector bindings are defined above; constructor contracts for other composite types remain open. |
 
 Primitive numeric and string conversion prefers JavaScript `Number` and
-`String` semantics where applicable. `Number` conversion results such as
-`NaN` and `Infinity` are preserved as JavaScript numbers rather than treated
-as conversion failures. Native conversion exceptions remain errors.
-Converting a number to `dict` or `list` is an error; it does not create a
-collection containing that number.
+`String` semantics where applicable. Numeric constructors reject non-finite
+results after coercion. `i32.new` and `u32.new` truncate toward zero and clamp
+finite out-of-range values. `f32.new` clamps finite out-of-range values
+without applying `Math.fround`. Numeric strings additionally support the
+`:i`, `:u`, and `:f` conversion suffixes described above. Native conversion
+exceptions remain errors. `list.new` constructs entries from its arguments,
+and `dict.new` constructs alternating key/value entries. Their variadic behavior is defined
+in [implemented JavaScript data bindings](#implemented-javascript-data-bindings).
 
 For example, `(i32? 10)` returns true because the value is suitable for
 `i32`, even though its unsuffixed source literal is `num`. An `i32` parameter
@@ -787,17 +934,19 @@ mutation. If a mutation makes a value unsuitable, the next guard that
 receives it raises the error. Mutated data that encounters no further guard
 is not automatically checked.
 
-Target guard and GPU conversion rules for non-finite numbers, numeric range
-checks, alias behavior, exact guarded API boundaries, and error representation
-still need contracts. Serializing `NaN` and `Infinity` also needs a separate
-JSON policy; their acceptance in JavaScript does not choose a JSON encoding.
+The current JavaScript data guards check scalar suitability and vector
+components. GPU conversion, alias behavior, exact guarded API boundaries,
+and error representation still need contracts. Numeric constructors and guards
+reject `NaN` and infinities, but JavaScript arithmetic or direct mutation can
+still introduce them. Validation of those values at serialization remains a
+separate boundary contract.
 
-Composite shapes concern the exact object fields representing vector
-components, matrix elements and their order, struct fields, and
-WGSL-compatible `array` element types, lengths, and data. Constructor inputs,
-these representation layouts, and their boundary packing remain open.
-For object-represented types, a discriminator alone does not define every
-field or component check.
+The implemented vector bindings define their JavaScript component fields.
+Matrix elements and their order, struct fields, and WGSL-compatible `array`
+element types, lengths, and data still need contracts. Constructor inputs
+and representation layouts for those types, and boundary packing for all
+composite types, remain open. For object-represented types, a discriminator
+alone does not define every field or component check.
 
 ## Shader handles
 

@@ -1,34 +1,32 @@
-import { __type__ } from "./index";
+import { __u32__ } from "./type";
+import { Type } from ".";
+import type { __kind__ } from ".";
+import { num } from "./num";
 
-export const __u32__ = "__u32__";
 
-export type __u32__ = typeof __u32__;
+export type u32 = number & { [__kind__]: __u32__ };
 
-export type u32 = number & { [__type__]: __u32__ };
+const __min__ =           0;
+const __max__ =  4294967295;
 
-export const u32 = {
-  __min__:           0,
-  __max__:  4294967295,
+export const u32 = Type.new({
+  __type__: __u32__,
 
-  // (u32 a)
-  new(a: unknown = 0): u32 {    
-    try {
-      return typeof a === "number"
-        ? Math.min(Math.max(       a , u32.__min__), u32.__max__) as u32
-        : Math.min(Math.max(Number(a), u32.__min__), u32.__max__) as u32
-    } catch (e) {
-      throw new TypeError(`[u32.new] Cannot coerce ${a} to u32`);
-    }
+  // (u32 ...)
+  new(a: unknown = null, ..._: unknown[]): u32 {
+    if (_.length > 0) throw new TypeError("[u32] Expected zero or one argument(s)");
+    return Math.min(Math.max(Math.trunc(num.new(a)), __min__), __max__) as u32;
   },
 
-  // (u32? a)
-  maybe(a: unknown): a is u32 {
-    return typeof a === "number" && a % 1 === 0 && a >= u32.__min__ && a <= u32.__max__;
+  // (u32? a ...)
+  query(a: unknown, ..._: unknown[]): a is u32 {
+    if (_.length > 0) throw new TypeError("[u32?] Expected zero or one argument(s)");
+    return num.query(a) && a % 1 === 0 && a >= __min__ && a <= __max__;
   },
 
-  // a:u32
-  assert(a: unknown): u32 {
-    if (!u32.maybe(a)) throw new TypeError(`[u32.assert] Expected u32, got ${a}`);
+  // a:u32 
+  assert(a: unknown = null): u32 {
+    if (!u32.query(a)) throw new TypeError(`[:u32] Expected u32, got ${a}`);
     return a;
-  }
-}
+  },
+})

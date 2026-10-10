@@ -1,35 +1,53 @@
-import { num } from "./index";
+import { __list__ } from "./type";
+import { Type } from ".";
+import { num } from "./num";
+import { str } from "./str";
 
-export type list<T extends unknown[] = unknown[]> = T
+export type list = unknown[];
 
-export const list = {
-  // (list a ...)
-  new(a: unknown = []): list {
-    if (!list.maybe(a)) throw new TypeError(`[list.new] Cannot coerce ${a} to list`);
-    return a as list;
+
+export const list = Type.new({
+  __type__: __list__,
+
+  // (list ...)
+  new(...a: unknown[]): list {
+    return a;
   },
 
-  // (list? a)
-  maybe(a: unknown): a is list {
-    return Array.isArray(a);
+  // (list? a ...)
+  query(a: unknown, ..._: unknown[]): a is list {
+    if (_.length > 0) throw new TypeError("[list?] Expected zero or one argument(s)");
+    return Array.isArray(a)
   },
 
   // a:list
   assert(a: unknown): list {
-    if (!list.maybe(a)) throw new TypeError(`[list.assert] Expected list, got ${a}`);
+    if (!list.query(a)) throw new TypeError(`[:list] Expected list, got ${a}`);
     return a;
   },
 
-  get(a: list, i: num, v: unknown = null) {
+  __get__(a: list, i: any, v: unknown = null) {
+    if (!num.query(i)) throw new TypeError(`[list.__get__] Expected num, got ${i}`);
     return a[i] ?? v;
   },
 
-  put(a: list, v: unknown, i: num = a.length) {
+  __put__(a: list, v: unknown, i: any = a.length) {
+    if (!num.query(i)) throw new TypeError(`[list.__put__] Expected num, got ${i}`);
     a[i] = v;
+    return a;
   },
 
-  del(a: list, i: num) {
-    if (i < 0 || i >= a.length) throw new RangeError(`[list.del] Index ${i} out of range`);
+  __del__(a: list, i: any) {
+    if (!num.query(i)) throw new TypeError(`[list.__del__] Expected num, got ${i}`);
     a.splice(i, 1);
-  },  
-}
+    return a;
+  },
+
+  __len__(a: list): num {
+    return a.length;
+  },
+
+  __str__(a: list): str {
+    return `[${a.map(v => str.new(v)).join(",")}]`;
+  },
+})

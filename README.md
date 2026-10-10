@@ -58,6 +58,24 @@ Mercury's ultimate goal is an editor written in hg-lisp, with its own source vis
 
 The editor manages a separate application instance for the app being developed. The editor and child app are distinct instances, each with one canvas destination. From the editor, you should be able to inspect and edit the child's live memory, update its code, and reset it. External invocation of child functions or API operations still needs a contract. See [reflection and external control](docs/api.md#reflection-and-external-control) for that runtime boundary.
 
+## App prototype
+
+The current JavaScript prototype creates an app, draws into a 2D output
+buffer, and presents it on a canvas. It supports queued configuration,
+update events, and start, pause, and disposal. See the
+[implemented app foundation](docs/api.md#implemented-app-foundation) for the
+API and its provisional defaults. Scene execution and GPU rendering remain
+pending.
+
+```sh
+npm install
+npm run dev
+```
+
+The browser example in `src/main.ts` renders a small animated scene. Run
+`npm run test:app` for the app tests and `npm run build` for the production
+build.
+
 ## Design status
 
 These documents describe the intended design of the new Mercury runtime. The language and API are still being specified; examples illustrate the design rather than a released implementation. Installation, the complete API reference, and runnable getting-started instructions will follow once those contracts are defined.

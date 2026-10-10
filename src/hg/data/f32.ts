@@ -1,34 +1,32 @@
-import { __type__ } from "./index";
+import { __f32__ } from "./type";
+import { Type } from ".";
+import type { __kind__ } from ".";
+import { nil } from "./nil";
+import { num } from "./num";
 
-export const __f32__ = "__f32__";
+export type f32 = number & { [__kind__]: __f32__ };
 
-export type __f32__ = typeof __f32__;
+const __min__ = -3.4028235e38;
+const __max__ =  3.4028235e38;
 
-export type f32 = number & { [__type__]: __f32__ };
+export const f32 = Type.new({
+  __type__: __f32__,
 
-export const f32 = {
-  __min__: -3.4028235e38,
-  __max__:  3.4028235e38,
-
-  // (f32 a)
-  new(a: unknown = 0): f32 {
-    try {
-      return typeof a === "number"
-        ? Math.min(Math.max(       a , f32.__min__), f32.__max__) as f32
-        : Math.min(Math.max(Number(a), f32.__min__), f32.__max__) as f32
-    } catch (e) {
-      throw new TypeError(`[f32.new] Cannot coerce ${a} to f32`);
-    }
+  // (f32 ...)
+  new(a: unknown = nil, ..._: unknown[]): f32 {
+    if (_.length > 0) throw new TypeError("[f32] Expected zero or one argument(s)");
+    return Math.min(Math.max(num.new(a), __min__), __max__) as f32;
   },
 
-  // (f32? a)
-  maybe(a: unknown): a is f32 {
-    return typeof a === "number" && a >= f32.__min__ && a <= f32.__max__;
+  // (f32? a ...)
+  query (a: unknown, ..._: unknown[]): a is f32 {
+    if (_.length > 0) throw new TypeError("[f32?] Expected zero or one argument(s)");
+    return num.query(a) && a >= __min__ && a <= __max__;
   },
 
   // a:f32
   assert(a: unknown): f32 {
-    if (!f32.maybe(a)) throw new TypeError(`[f32.assert] Expected f32, got ${a}`);
+    if (!f32.query(a)) throw new TypeError(`[:f32] Expected f32, got ${a}`);
     return a;
-  }
-}
+  },
+})

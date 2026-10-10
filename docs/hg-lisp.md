@@ -369,7 +369,13 @@ Inside a WGSL function, the same mutable declaration can become:
 var x: i32 = 10;
 ```
 
-The JavaScript value remains an ordinary number. Explicit constructors can convert other primitive input types; numeric representation changes between JavaScript and WGSL happen at their boundary. The compiler may remove a constructor call only when it preserves conversion, error behavior, and the language's mutable binding semantics. Exact conversion rules for each input type, including fractional values and out-of-range results, remain to be specified.
+The JavaScript value remains an ordinary number. Explicit constructors can convert other primitive input types; numeric representation changes between JavaScript and WGSL happen at their boundary. The compiler may remove a constructor call only when it preserves conversion, error behavior, and the language's mutable binding semantics.
+
+The current JavaScript data bindings make scalar constructors variadic: numeric, string, and boolean constructors accept zero arguments or a single `undefined` for their defaults, one other argument to convert, and reject additional arguments. `nil` always produces `null`. `num` follows JavaScript `Number` conversion but rejects non-finite results; its query accepts only finite numbers. `i32` and `u32` also require finite inputs, truncate toward zero, and clamp to their ranges. `f32` rejects non-finite inputs and clamps finite host numbers to its range without applying `Math.fround`.
+
+Numeric conversion strings use a trailing `:i`, `:u`, or `:f` to select the corresponding scalar constructor. The parser trims surrounding whitespace and uses JavaScript `Number` on the remaining body, supporting decimal and exponent notation as well as hexadecimal, octal, and binary forms. For example, `(num "1.5:f")`, `(num "1e3:i")`, `(num "0xff:u")`, `(num "0o77:i")`, and `(num "0b10:f")` apply the selected conversion and return ordinary JavaScript numbers. Empty bodies and `NaN` parse results are syntax errors; parsed infinities fail numeric construction. These conversion strings are distinct from the intended [source numeric literal syntax](#numeric-literals).
+
+Collection constructors build lists from their argument entries and dictionaries from alternating keys and values. For example, `(list 10)` produces a list containing `10`, and `(dict "x" 10)` produces a dictionary whose `"x"` entry is `10`. The current vector bindings also accept multiple arguments. Their exact JavaScript inputs and conversion rules are documented under [implemented data bindings](api.md#implemented-javascript-data-bindings); compiler lowering and shader-boundary conversion remain separate design contracts.
 
 ### Passing data to shaders
 

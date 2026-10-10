@@ -1,5 +1,4 @@
-export declare const __type__: unique symbol;
-
+export * from "./type";
 export * from "./nil";
 export * from "./num";
 export * from "./str";
@@ -9,3 +8,12 @@ export * from "./dict";
 export * from "./i32";
 export * from "./u32";
 export * from "./f32";
+export * from "./vec2f";
+export * from "./vec3f";
+export * from "./vec4f";
+export * from "./vec2i";
+export * from "./vec3i";
+export * from "./vec4i";
+export * from "./vec2u";
+export * from "./vec3u";
+export * from "./vec4u";

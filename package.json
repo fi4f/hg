@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "test": "node --test tests/data.test.mjs",
+    "test:vectors": "node --test tests/vectors.test.mjs",
+    "test:app": "node --test tests/app.test.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
